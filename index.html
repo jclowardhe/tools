@@ -3,639 +3,339 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ladder Tracker</title>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@400;600;700&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<title>Tool Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --paper: #faf8f4;
-  --paper2: #f2efe9;
-  --rule: #d8d3c8;
-  --rule-heavy: #b8b0a0;
-  --ink: #1c1a17;
-  --ink-mid: #5c5650;
-  --ink-light: #9c9488;
-  --red: #c0392b;
-  --green: #1e7a3c;
-  --blue: #1a4f9c;
-  --amber: #b8720a;
-  --sidebar-w: 220px;
+  --bg: #f0f2f5;
+  --surface: #ffffff;
+  --surface-hover: #f8f9fb;
+  --border: #e4e7ec;
+  --border-strong: #cdd2da;
+  --text: #111827;
+  --text-mid: #4b5563;
+  --text-light: #9ca3af;
+  --accent: #2563eb;
+  --green: #16a34a;
+  --green-bg: #f0fdf4;
+  --green-border: #bbf7d0;
+  --blue: #2563eb;
+  --blue-bg: #eff6ff;
+  --blue-border: #bfdbfe;
+  --red: #dc2626;
+  --red-bg: #fef2f2;
+  --red-border: #fecaca;
+  --amber: #d97706;
+  --amber-bg: #fffbeb;
+  /* team colors - bold left border accents */
+  --t0: #2563eb; --t1: #16a34a; --t2: #9333ea;
+  --t3: #ea580c; --t4: #0891b2; --t5: #be185d;
+  --t6: #ca8a04; --t7: #15803d;
 }
 
-body {
-  font-family: 'IBM Plex Sans', sans-serif;
-  background: var(--paper2);
-  color: var(--ink);
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
+body { font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
 
-body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 9999;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
-}
-
+/* ── TOPBAR ── */
 .topbar {
-  background: var(--ink);
-  color: var(--paper);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 28px;
-  height: 52px;
-  flex-shrink: 0;
-  border-bottom: 3px solid var(--amber);
-  position: sticky;
-  top: 0;
-  z-index: 100;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 24px; height: 58px; flex-shrink: 0;
+  position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
 }
+.topbar-left { display: flex; align-items: center; gap: 10px; }
+.app-logo { width: 32px; height: 32px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 16px; flex-shrink: 0; }
+.app-title { font-family: 'Nunito', sans-serif; font-size: 17px; font-weight: 800; color: var(--text); letter-spacing: -0.3px; }
+.app-subtitle { font-size: 12px; color: var(--text-light); font-weight: 400; }
 
-.topbar-left { display: flex; align-items: baseline; gap: 16px; }
+.topbar-stats { display: flex; gap: 4px; }
+.tstat { display: flex; flex-direction: column; align-items: center; padding: 4px 14px; border-radius: 8px; background: var(--bg); }
+.tstat-num { font-family: 'JetBrains Mono', monospace; font-size: 17px; font-weight: 700; line-height: 1; }
+.tstat-num.g { color: var(--green); }
+.tstat-num.b { color: var(--blue); }
+.tstat-num.r { color: var(--red); }
+.tstat-num.k { color: var(--text); }
+.tstat-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-light); margin-top: 1px; }
 
-.app-title {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
+.topbar-actions { display: flex; gap: 8px; align-items: center; }
+.sync-pill { display: flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 20px; background: var(--bg); border: 1px solid var(--border); }
+.sync-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-light); transition: background 0.3s; }
+.sync-dot.ok { background: var(--green); }
+.sync-dot.syncing { background: var(--amber); animation: pulse 1s infinite; }
+.sync-dot.err { background: var(--red); }
+.sync-label { font-size: 11px; font-weight: 600; color: var(--text-mid); }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
-.app-subtitle {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 10px;
-  color: #888;
-  letter-spacing: 0.05em;
-}
+.btn { font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 700; padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 6px; }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: #1d4ed8; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
+.btn-ghost { background: var(--surface); color: var(--text-mid); border: 1px solid var(--border); }
+.btn-ghost:hover { background: var(--bg); color: var(--text); }
+.btn-scan { background: var(--blue-bg); color: var(--blue); border: 1px solid var(--blue-border); }
+.btn-scan:hover { background: #dbeafe; }
+.btn-admin { background: var(--surface); color: var(--text-mid); border: 1px solid var(--border); }
+.btn-admin:hover { background: var(--bg); }
 
-.topbar-stats { display: flex; gap: 28px; align-items: center; }
-
-.tstat { display: flex; align-items: baseline; gap: 6px; }
-
-.tstat-num {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 20px;
-  font-weight: 600;
-  line-height: 1;
-}
-.tstat-num.g { color: #4caf7d; }
-.tstat-num.b { color: #6b9fd4; }
-.tstat-num.r { color: #e07070; }
-.tstat-num.w { color: var(--paper); }
-
-.tstat-label {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 9px;
-  color: #666;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.topbar-actions { display: flex; gap: 8px; }
-
-.btn {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  padding: 7px 14px;
-  border: none;
-  cursor: pointer;
-  transition: all 0.12s;
-}
-.btn-primary { background: var(--amber); color: #fff; }
-.btn-primary:hover { background: #d4830c; }
-.btn-ghost { background: transparent; color: #aaa; border: 1px solid #444; }
-.btn-ghost:hover { border-color: #888; color: var(--paper); }
-
+/* ── LAYOUT ── */
 .layout { display: flex; flex: 1; min-height: 0; }
 
+/* ── SIDEBAR ── */
 .sidebar {
-  width: var(--sidebar-w);
-  flex-shrink: 0;
-  background: var(--paper);
-  border-right: 2px solid var(--rule-heavy);
-  display: flex;
-  flex-direction: column;
-  position: sticky;
-  top: 52px;
-  height: calc(100vh - 52px);
+  width: 210px; flex-shrink: 0;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  position: sticky; top: 58px;
+  height: calc(100vh - 58px);
   overflow-y: auto;
 }
-
-.sidebar-section {
-  padding: 14px 16px 8px;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--ink-light);
-  border-bottom: 1px solid var(--rule);
-}
-
+.sidebar-heading { padding: 16px 16px 8px; font-size: 10px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-light); }
 .team-nav-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 16px;
-  cursor: pointer;
-  border-bottom: 1px solid var(--rule);
-  transition: background 0.1s;
-  gap: 8px;
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 16px; cursor: pointer;
+  border-radius: 0; transition: background 0.1s;
+  border-left: 3px solid transparent;
 }
-.team-nav-item:hover { background: var(--paper2); }
-.team-nav-item.active { background: var(--ink); color: var(--paper); }
+.team-nav-item:hover { background: var(--bg); }
+.team-nav-item.active { background: var(--blue-bg); border-left-color: var(--blue); }
+.team-nav-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+.team-nav-name { font-size: 13px; font-weight: 700; color: var(--text); flex: 1; }
+.team-nav-item.active .team-nav-name { color: var(--blue); }
+.team-nav-count { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; color: var(--text-light); background: var(--bg); padding: 1px 7px; border-radius: 10px; }
+.team-nav-item.active .team-nav-count { background: var(--blue-border); color: var(--blue); }
+.team-nav-alerts { display: flex; gap: 3px; }
+.alert-dot { width: 6px; height: 6px; border-radius: 50%; }
 
-.team-nav-name {
-  font-family: 'IBM Plex Sans Condensed', sans-serif;
-  font-size: 13px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  flex: 1;
-}
+.sidebar-add-btn { margin: 8px 12px; padding: 8px; border: 1.5px dashed var(--border); border-radius: 8px; background: transparent; cursor: pointer; font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 700; color: var(--text-light); display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.15s; }
+.sidebar-add-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--blue-bg); }
+.sidebar-divider { height: 1px; background: var(--border); margin: 8px 0; }
+.sidebar-filter-btn { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 8px 16px; font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 700; background: transparent; border: none; cursor: pointer; color: var(--text-mid); transition: background 0.1s; border-left: 3px solid transparent; }
+.sidebar-filter-btn:hover { background: var(--bg); }
+.sidebar-filter-btn.active { background: var(--bg); color: var(--text); border-left-color: var(--border-strong); }
 
-.team-nav-count {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 11px;
-  font-weight: 600;
-  background: var(--rule);
-  padding: 1px 6px;
-  border-radius: 2px;
-  color: var(--ink-mid);
-  min-width: 24px;
-  text-align: center;
-}
-.team-nav-item.active .team-nav-count { background: rgba(255,255,255,0.15); color: var(--paper); }
+/* ── MAIN ── */
+.main { flex: 1; overflow-y: auto; display: flex; flex-direction: column; min-height: 0; }
 
-.team-status-dots { display: flex; gap: 3px; align-items: center; }
-.sdot { width: 6px; height: 6px; border-radius: 50%; }
-.sdot.g { background: var(--green); }
-.sdot.b { background: var(--blue); }
-.sdot.r { background: var(--red); }
-.team-nav-item.active .sdot.g { background: #4caf7d; }
-.team-nav-item.active .sdot.b { background: #6b9fd4; }
-.team-nav-item.active .sdot.r { background: #e07070; }
+/* ── PAGE HEADER ── */
+.page-header { padding: 20px 24px 16px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; flex-shrink: 0; }
+.page-title { font-size: 22px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; }
+.page-meta { font-size: 12px; color: var(--text-light); font-weight: 600; margin-top: 2px; }
+.filter-bar { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.filter-pill { font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 700; padding: 5px 13px; border-radius: 20px; border: 1.5px solid var(--border); background: transparent; cursor: pointer; color: var(--text-mid); transition: all 0.12s; }
+.filter-pill:hover { border-color: var(--border-strong); color: var(--text); }
+.filter-pill.active-all { background: var(--text); color: #fff; border-color: var(--text); }
+.filter-pill.active-avail { background: var(--green); color: #fff; border-color: var(--green); }
+.filter-pill.active-inuse { background: var(--blue); color: #fff; border-color: var(--blue); }
+.filter-pill.active-broken { background: var(--red); color: #fff; border-color: var(--red); }
+.search-input { font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 8px; border: 1.5px solid var(--border); background: var(--bg); color: var(--text); outline: none; width: 190px; transition: border-color 0.15s; }
+.search-input:focus { border-color: var(--accent); background: var(--surface); }
+.search-input::placeholder { color: var(--text-light); font-weight: 400; }
 
-.sidebar-add-team {
-  padding: 10px 16px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--ink-light);
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 11px;
-  border-bottom: 1px solid var(--rule);
-  transition: color 0.12s;
-}
-.sidebar-add-team:hover { color: var(--amber); }
+/* ── TABLE ── */
+.ledger-wrap { flex: 1; padding: 20px 24px; display: flex; flex-direction: column; gap: 0; }
+.group-block { background: var(--surface); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+.group-header { display: flex; align-items: center; gap: 12px; padding: 12px 18px; background: var(--bg); border-bottom: 1px solid var(--border); }
+.group-color { width: 4px; height: 20px; border-radius: 2px; flex-shrink: 0; }
+.group-name { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-mid); flex: 1; }
+.group-count { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-light); }
 
-.sidebar-type-filters { padding: 8px 0; border-top: 2px solid var(--rule-heavy); margin-top: auto; }
+.table-head { display: grid; grid-template-columns: 110px 1fr 100px 90px 120px 130px 68px; padding: 8px 18px; border-bottom: 1px solid var(--border); }
+.th { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-light); }
+.table-row { display: grid; grid-template-columns: 110px 1fr 100px 90px 120px 130px 68px; padding: 12px 18px; border-bottom: 1px solid var(--border); align-items: center; transition: background 0.08s; animation: rowIn 0.18s ease both; }
+.table-row:last-child { border-bottom: none; }
+.table-row:hover { background: var(--surface-hover); }
+@keyframes rowIn { from { opacity:0; transform:translateY(3px); } to { opacity:1; transform:translateY(0); } }
 
-.type-filter-btn {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  padding: 8px 16px;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 11px;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  color: var(--ink-mid);
-  text-align: left;
-  border-bottom: 1px solid var(--rule);
-  transition: background 0.1s;
-}
-.type-filter-btn:hover { background: var(--paper2); }
-.type-filter-btn.active { background: var(--paper2); color: var(--ink); font-weight: 600; }
+.cell-id { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600; color: var(--text); }
+.cell-name { font-size: 14px; font-weight: 700; color: var(--text); }
+.cell-spec { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-mid); }
+.cell-team { font-size: 12px; font-weight: 700; color: var(--text-mid); }
+.cell-date { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-light); }
 
-.main { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+.badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
+.badge-avail { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); }
+.badge-inuse { background: var(--blue-bg); color: var(--blue); border: 1px solid var(--blue-border); }
+.badge-broken { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-border); }
+.badge-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
 
-.manifest-header {
-  background: var(--paper);
-  border-bottom: 3px double var(--rule-heavy);
-  padding: 16px 28px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-}
+.row-actions { display: flex; gap: 4px; justify-content: flex-end; opacity: 0; transition: opacity 0.12s; }
+.table-row:hover .row-actions { opacity: 1; }
+.icon-btn { width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 13px; color: var(--text-mid); transition: all 0.1s; }
+.icon-btn:hover { border-color: var(--border-strong); background: var(--bg); }
+.icon-btn.out:hover { background: var(--blue-bg); border-color: var(--blue-border); }
+.icon-btn.in:hover { background: var(--green-bg); border-color: var(--green-border); }
+.icon-btn.del:hover { background: var(--red-bg); border-color: var(--red-border); }
 
-.manifest-title {
-  font-family: 'IBM Plex Sans Condensed', sans-serif;
-  font-size: 22px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
+.empty-state { padding: 60px 24px; text-align: center; color: var(--text-light); }
+.empty-icon { font-size: 40px; margin-bottom: 12px; }
+.empty-msg { font-size: 15px; font-weight: 700; color: var(--text-mid); }
+.empty-sub { font-size: 13px; margin-top: 4px; }
 
-.manifest-meta {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 10px;
-  color: var(--ink-light);
-  margin-top: 2px;
-}
+/* ── ADD ROW ── */
+.add-row-wrap { background: var(--surface); border-radius: 12px; border: 2px solid var(--accent); padding: 12px 18px; margin-bottom: 16px; display: none; }
+.add-row-wrap.visible { display: block; }
+.add-row-grid { display: grid; grid-template-columns: 110px 1fr 100px 90px 120px auto; gap: 8px; align-items: end; }
+.add-label { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-light); margin-bottom: 4px; }
+.add-input { width: 100%; font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 600; padding: 7px 10px; border-radius: 7px; border: 1.5px solid var(--border); background: var(--bg); color: var(--text); outline: none; transition: border-color 0.12s; }
+.add-input:focus { border-color: var(--accent); background: var(--surface); }
+.add-input::placeholder { color: var(--text-light); font-weight: 400; }
+.add-select { width: 100%; font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 600; padding: 7px 10px; border-radius: 7px; border: 1.5px solid var(--border); background: var(--bg); color: var(--text); outline: none; appearance: none; cursor: pointer; }
+.add-select:focus { border-color: var(--accent); }
+.add-actions { display: flex; gap: 6px; }
+.add-save { padding: 8px 14px; border-radius: 7px; background: var(--accent); color: #fff; border: none; font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; }
+.add-cancel { padding: 8px 12px; border-radius: 7px; background: var(--bg); color: var(--text-mid); border: 1px solid var(--border); font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; }
 
-.filter-strip { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-
-.status-filter {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  padding: 5px 12px;
-  border: 1.5px solid var(--rule-heavy);
-  background: transparent;
-  cursor: pointer;
-  color: var(--ink-mid);
-  transition: all 0.12s;
-}
-.status-filter:hover { border-color: var(--ink); color: var(--ink); }
-.status-filter.f-all.active  { background: var(--ink); color: var(--paper); border-color: var(--ink); }
-.status-filter.f-avail.active { background: var(--green); color: #fff; border-color: var(--green); }
-.status-filter.f-inuse.active { background: var(--blue); color: #fff; border-color: var(--blue); }
-.status-filter.f-broken.active { background: var(--red); color: #fff; border-color: var(--red); }
-
-.search-box {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 11px;
-  padding: 5px 10px;
-  border: 1.5px solid var(--rule-heavy);
-  background: var(--paper2);
-  color: var(--ink);
-  outline: none;
-  width: 180px;
-  transition: border-color 0.12s;
-}
-.search-box:focus { border-color: var(--amber); }
-.search-box::placeholder { color: var(--ink-light); }
-
-.ledger { flex: 1; }
-
-.ledger-head {
-  display: grid;
-  grid-template-columns: 110px 160px 120px 150px 1fr 64px;
-  padding: 8px 28px;
-  background: var(--ink);
-  color: var(--paper);
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-.lh {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: #888;
-}
-
-.ledger-body { background: var(--paper); }
-
-.ledger-row {
-  display: grid;
-  grid-template-columns: 110px 160px 120px 150px 1fr 64px;
-  padding: 0 28px;
-  min-height: 42px;
-  align-items: center;
-  border-bottom: 1px solid var(--rule);
-  transition: background 0.08s;
-  animation: rowSlide 0.18s ease both;
-}
-
-@keyframes rowSlide {
-  from { opacity: 0; transform: translateX(-6px); }
-  to   { opacity: 1; transform: translateX(0); }
-}
-
-.ledger-row:nth-child(even) { background: #faf8f4; }
-.ledger-row:nth-child(odd)  { background: #fff; }
-.ledger-row:hover { background: #f0ece3 !important; }
-
-.cell-id {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.03em;
-}
-
-.cell-size {
-  font-family: 'IBM Plex Sans Condensed', sans-serif;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.stamp {
-  display: inline-block;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  padding: 3px 8px;
-  border-width: 1.5px;
-  border-style: solid;
-}
-.stamp-avail { color: var(--green); border-color: var(--green); background: rgba(30,122,60,0.06); }
-.stamp-inuse { color: var(--blue);  border-color: var(--blue);  background: rgba(26,79,156,0.06); }
-.stamp-broken { color: var(--red); border-color: var(--red); background: rgba(192,57,43,0.06); transform: rotate(-1.5deg); display: inline-block; }
-
-.cell-team {
-  font-family: 'IBM Plex Sans Condensed', sans-serif;
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--ink-mid);
-}
-
-.cell-notes {
-  font-family: 'IBM Plex Sans', sans-serif;
-  font-size: 11px;
-  color: var(--ink-light);
-  font-style: italic;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  padding-right: 8px;
-}
-
-.cell-actions { display: flex; gap: 4px; justify-content: flex-end; opacity: 0; transition: opacity 0.12s; }
-.ledger-row:hover .cell-actions { opacity: 1; }
-
-.row-btn {
-  width: 26px; height: 26px;
-  border: 1.5px solid var(--rule-heavy);
-  background: var(--paper);
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  color: var(--ink-mid);
-  transition: all 0.1s;
-}
-.row-btn:hover { border-color: var(--ink); color: var(--ink); }
-.row-btn.del:hover { border-color: var(--red); color: var(--red); background: rgba(192,57,43,0.06); }
-
-.group-header {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 10px 28px;
-  background: var(--paper2);
-  border-bottom: 2px solid var(--rule-heavy);
-  border-top: 2px solid var(--rule-heavy);
-}
-
-.gh-name {
-  font-family: 'IBM Plex Sans Condensed', sans-serif;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--ink-mid);
-}
-.gh-rule { flex: 1; height: 1px; background: var(--rule-heavy); }
-.gh-count { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--ink-light); }
-
-.empty-ledger {
-  padding: 80px 28px;
-  text-align: center;
-  color: var(--ink-light);
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 13px;
-}
-.empty-big {
-  font-family: 'IBM Plex Sans Condensed', sans-serif;
-  font-size: 48px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--rule-heavy);
-  margin-bottom: 8px;
-}
-
-.add-row {
-  display: grid;
-  grid-template-columns: 110px 160px 120px 150px 1fr 64px;
-  padding: 8px 28px;
-  background: #fffdf7;
-  border-top: 2px solid var(--amber);
-  border-bottom: 2px solid var(--amber);
-  align-items: center;
-}
-
-.add-input {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 12px;
-  background: transparent;
-  border: none;
-  border-bottom: 1.5px solid var(--rule-heavy);
-  color: var(--ink);
-  padding: 4px 6px 4px 0;
-  outline: none;
-  width: 95%;
-  transition: border-color 0.12s;
-}
-.add-input:focus { border-color: var(--amber); }
-.add-input::placeholder { color: var(--ink-light); font-style: italic; }
-
-.add-select {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 11px;
-  background: transparent;
-  border: none;
-  border-bottom: 1.5px solid var(--rule-heavy);
-  color: var(--ink);
-  padding: 4px 6px 4px 0;
-  outline: none;
-  width: 95%;
-  cursor: pointer;
-  appearance: none;
-}
-.add-select:focus { border-color: var(--amber); }
-
-.overlay {
-  position: fixed; inset: 0;
-  background: rgba(28,26,23,0.55);
-  z-index: 200;
-  display: flex; align-items: center; justify-content: center;
-  animation: fadeIn 0.15s ease;
-}
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-.modal {
-  background: var(--paper);
-  border: 2px solid var(--ink);
-  width: 440px;
-  max-width: 95vw;
-  animation: popIn 0.18s ease;
-  position: relative;
-}
-@keyframes popIn {
-  from { opacity: 0; transform: scale(0.96) translateY(8px); }
-  to   { opacity: 1; transform: scale(1) translateY(0); }
-}
-
-.modal-titlebar {
-  background: var(--ink);
-  color: var(--paper);
-  padding: 12px 18px;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.modal-close {
-  background: transparent; border: none; color: #888;
-  cursor: pointer; font-size: 16px; line-height: 1; padding: 0;
-  transition: color 0.1s;
-}
-.modal-close:hover { color: var(--paper); }
-
-.modal-body { padding: 20px 18px; }
-
+/* ── MODALS ── */
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(3px); z-index: 200; display: flex; align-items: center; justify-content: center; animation: fadeIn 0.15s; }
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+.modal { background: var(--surface); border-radius: 16px; width: 460px; max-width: 95vw; box-shadow: 0 20px 60px rgba(0,0,0,0.15); animation: popIn 0.18s ease; overflow: hidden; }
+@keyframes popIn { from{opacity:0;transform:scale(0.95) translateY(8px)} to{opacity:1;transform:scale(1) translateY(0)} }
+.modal-header { padding: 20px 20px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.modal-title { font-size: 16px; font-weight: 800; color: var(--text); }
+.modal-close { width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; color: var(--text-mid); transition: all 0.1s; }
+.modal-close:hover { background: var(--surface); border-color: var(--border-strong); }
+.modal-body { padding: 20px; }
 .field { margin-bottom: 14px; }
-
-.field-label {
-  display: block;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--ink-light);
-  margin-bottom: 5px;
-}
-
-.field-input, .field-select {
-  width: 100%;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 13px;
-  background: var(--paper2);
-  border: 1.5px solid var(--rule-heavy);
-  color: var(--ink);
-  padding: 9px 11px;
-  outline: none;
-  transition: border-color 0.12s;
-  appearance: none;
-}
-.field-input:focus, .field-select:focus { border-color: var(--amber); }
-
+.field-label { display: block; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-mid); margin-bottom: 6px; }
+.field-input, .field-select { width: 100%; font-family: 'Nunito', sans-serif; font-size: 14px; font-weight: 600; padding: 10px 12px; border-radius: 8px; border: 1.5px solid var(--border); background: var(--bg); color: var(--text); outline: none; transition: border-color 0.12s; appearance: none; }
+.field-input:focus, .field-select:focus { border-color: var(--accent); background: var(--surface); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
 .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.modal-footer { padding: 16px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px; background: var(--bg); }
 
-.modal-footer {
-  padding: 12px 18px;
-  border-top: 1px solid var(--rule);
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  background: var(--paper2);
+/* ── SCANNER ── */
+.scanner-modal { background: var(--surface); border-radius: 16px; width: 360px; max-width: 95vw; box-shadow: 0 20px 60px rgba(0,0,0,0.2); overflow: hidden; animation: popIn 0.18s ease; }
+.scanner-video-wrap { position: relative; background: #000; aspect-ratio: 1; }
+#scannerVideo { width: 100%; height: 100%; object-fit: cover; display: block; }
+.scanner-aim { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+.scanner-box { width: 55%; height: 55%; border: 3px solid var(--accent); border-radius: 12px; box-shadow: 0 0 0 1000px rgba(0,0,0,0.45); }
+.scanner-status { padding: 14px 18px; font-size: 13px; font-weight: 600; color: var(--text-mid); text-align: center; min-height: 46px; display: flex; align-items: center; justify-content: center; }
+
+/* ── CHECKOUT ── */
+.co-tool-id { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; color: var(--text-light); }
+.co-tool-name { font-size: 20px; font-weight: 800; color: var(--text); margin: 4px 0 16px; letter-spacing: -0.3px; }
+.quick-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.qa-btn { padding: 14px 8px; border-radius: 10px; border: 2px solid; cursor: pointer; font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 800; text-align: center; transition: all 0.15s; background: transparent; }
+.qa-btn .qa-icon { font-size: 22px; display: block; margin-bottom: 6px; }
+.qa-out { border-color: var(--blue-border); color: var(--blue); background: var(--blue-bg); }
+.qa-out:hover { background: var(--blue); color: #fff; transform: translateY(-2px); box-shadow: 0 6px 16px rgba(37,99,235,0.3); }
+.qa-in { border-color: var(--green-border); color: var(--green); background: var(--green-bg); }
+.qa-in:hover { background: var(--green); color: #fff; transform: translateY(-2px); box-shadow: 0 6px 16px rgba(22,163,74,0.3); }
+.qa-broken { border-color: var(--red-border); color: var(--red); background: var(--red-bg); }
+.qa-broken:hover { background: var(--red); color: #fff; transform: translateY(-2px); box-shadow: 0 6px 16px rgba(220,38,38,0.3); }
+.co-status-row { display: flex; align-items: center; gap: 8px; padding: 10px 0; border-top: 1px solid var(--border); font-size: 13px; color: var(--text-mid); font-weight: 600; }
+
+/* ── ADMIN / QR ── */
+.admin-page { display: none; flex: 1; flex-direction: column; overflow-y: auto; }
+.admin-page.visible { display: flex; }
+.admin-header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+.admin-title { font-size: 20px; font-weight: 800; color: var(--text); }
+.admin-subtitle { font-size: 12px; color: var(--text-light); font-weight: 600; margin-top: 2px; }
+.admin-body { padding: 24px; flex: 1; }
+.qr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 16px; }
+.qr-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 12px 12px; display: flex; flex-direction: column; align-items: center; gap: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+.qr-canvas-wrap { width: 120px; height: 120px; }
+.qr-card-id { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; color: var(--text); }
+.qr-card-name { font-size: 11px; font-weight: 700; color: var(--text-mid); text-align: center; text-transform: uppercase; letter-spacing: 0.04em; }
+.qr-card-spec { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-light); }
+
+@media print {
+  .topbar, .sidebar, .admin-header { display: none !important; }
+  .layout { display: block !important; }
+  .main { display: none !important; }
+  .admin-page { display: block !important; }
+  .admin-body { padding: 4mm; }
+  .qr-grid { grid-template-columns: repeat(4, 1fr); gap: 4mm; }
+  .qr-card { border: 0.5mm solid #ccc; page-break-inside: avoid; border-radius: 0; }
 }
 
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: var(--paper2); }
-::-webkit-scrollbar-thumb { background: var(--rule-heavy); }
-::-webkit-scrollbar-thumb:hover { background: var(--ink-mid); }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
 </style>
 </head>
 <body>
 
 <div class="topbar">
   <div class="topbar-left">
-    <div class="app-title">// Ladder Manifest</div>
+    <div class="app-title">// Tool Tracker</div>
     <div class="app-subtitle">field asset tracking</div>
   </div>
   <div class="topbar-stats" id="topStats"></div>
   <div class="topbar-actions">
+    <span class="sync-dot" id="syncDot"></span>
+    <span class="sync-label" id="syncLabel">connecting…</span>
+    <button class="btn btn-ghost" onclick="toggleAdmin()" id="adminBtn">⚙ QR Admin</button>
+    <button class="btn btn-scan" onclick="openScanner()">⬜ Scan QR</button>
     <button class="btn btn-ghost" onclick="openTeamModal()">+ Team</button>
-    <button class="btn btn-primary" onclick="openAddRow()">+ Ladder</button>
+    <button class="btn btn-primary" onclick="openAddRow()">+ Tool</button>
   </div>
 </div>
 
 <div class="layout">
   <nav class="sidebar">
-    <div class="sidebar-section">Teams</div>
+    <div class="sidebar-heading">Teams</div>
     <div id="teamNav"></div>
-    <div class="sidebar-add-team" onclick="openTeamModal()">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      Add team
-    </div>
-    <div style="flex:1"></div>
-    <div class="sidebar-type-filters">
-      <div class="sidebar-section" style="border-bottom:none;padding-bottom:6px">Type</div>
-      <button class="type-filter-btn active" data-type="all" onclick="setTypeFilter('all')">All types</button>
-      <button class="type-filter-btn" data-type="A-Frame" onclick="setTypeFilter('A-Frame')">A-Frame</button>
-      <button class="type-filter-btn" data-type="Extension" onclick="setTypeFilter('Extension')">Extension</button>
-      <button class="type-filter-btn" data-type="Multi-Position" onclick="setTypeFilter('Multi-Position')">Multi-Position</button>
-      <button class="type-filter-btn" data-type="SkyScraper" onclick="setTypeFilter('SkyScraper')">SkyScraper</button>
-    </div>
+    <button class="sidebar-add-btn" onclick="openTeamModal()">+ Add Team</button>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-heading">Status</div>
+    <button class="sidebar-filter-btn active" data-type="all" onclick="setTypeFilter('all')">All Tools</button>
+    <button class="sidebar-filter-btn" data-type="Available" onclick="setTypeFilter('Available')">✓ Available</button>
+    <button class="sidebar-filter-btn" data-type="In Use" onclick="setTypeFilter('In Use')">→ In Use</button>
+    <button class="sidebar-filter-btn" data-type="Broken" onclick="setTypeFilter('Broken')">⚠ Broken</button>
   </nav>
 
   <div class="main">
-    <div class="manifest-header">
+    <div class="page-header">
       <div>
-        <div class="manifest-title" id="manifestTitle">All Ladders</div>
-        <div class="manifest-meta" id="manifestMeta"></div>
+        <div class="page-title" id="manifestTitle">All Tools</div>
+        <div class="page-meta" id="manifestMeta"></div>
       </div>
-      <div class="filter-strip">
-        <input class="search-box" type="text" placeholder="Search ID / size…" id="searchInput" oninput="render()">
-        <button class="status-filter f-all active" data-s="all" onclick="setStatusFilter('all')">All</button>
-        <button class="status-filter f-avail" data-s="Available" onclick="setStatusFilter('Available')">Available</button>
-        <button class="status-filter f-inuse" data-s="In Use" onclick="setStatusFilter('In Use')">In Use</button>
-        <button class="status-filter f-broken" data-s="Broken" onclick="setStatusFilter('Broken')">Broken</button>
+      <div class="filter-bar">
+        <input class="search-input" type="text" placeholder="Search ID or name…" id="searchInput" oninput="renderTable()">
+        <button class="filter-pill active-all" data-s="all" onclick="setStatusFilter('all')">All</button>
+        <button class="filter-pill" data-s="Available" onclick="setStatusFilter('Available')">Available</button>
+        <button class="filter-pill" data-s="In Use" onclick="setStatusFilter('In Use')">In Use</button>
+        <button class="filter-pill" data-s="Broken" onclick="setStatusFilter('Broken')">Broken</button>
       </div>
     </div>
-
-    <div class="ledger">
-      <div class="ledger-head">
-        <div class="lh">ID</div>
-        <div class="lh">Size / Type</div>
-        <div class="lh">Status</div>
-        <div class="lh">Team</div>
-        <div class="lh">Notes</div>
-        <div class="lh"></div>
-      </div>
-      <div class="ledger-body" id="ledgerBody"></div>
+    <div class="ledger-wrap" id="ledgerWrap">
+      <div id="ledgerBody"></div>
     </div>
   </div>
 </div>
 
+
+<!-- ADMIN / QR PAGE -->
+<div class="admin-page" id="adminPage">
+  <div class="admin-header">
+    <div>
+      <div class="admin-title">QR Code Generator</div>
+      <div class="admin-subtitle">Print-ready codes for vinyl sticker shop</div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-ghost" onclick="window.print()">🖨 Print All</button>
+      <button class="btn btn-primary" onclick="toggleAdmin()">← Back to Tracker</button>
+    </div>
+  </div>
+  <div class="admin-body">
+    <div class="qr-grid" id="qrGrid"></div>
+  </div>
+</div>
+
 <!-- ADD ROW -->
-<div id="addRowEl" style="display:none" class="add-row">
-  <input class="add-input" id="ar-id" placeholder="AF-6-20" />
-  <input class="add-input" id="ar-size" placeholder="6' A-Frame" />
-  <select class="add-select" id="ar-status">
-    <option value="Available">Available</option>
-    <option value="In Use">In Use</option>
-    <option value="Broken">Broken</option>
-  </select>
-  <select class="add-select" id="ar-team"><option value="">Unassigned</option></select>
-  <input class="add-input" id="ar-notes" placeholder="Notes…" />
-  <div style="display:flex;gap:4px;justify-content:flex-end">
-    <button class="row-btn" onclick="saveAddRow()" title="Save" style="border-color:var(--green);color:var(--green)">
-      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-    </button>
-    <button class="row-btn del" onclick="cancelAddRow()" title="Cancel">
-      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-    </button>
+<div id="addRowEl" class="add-row-wrap" style="display:none">
+  <div class="add-row-grid">
+    <div><div class="add-label">ID</div><input class="add-input" id="ar-id" placeholder="TL-001" /></div>
+    <div><div class="add-label">Tool Name</div><input class="add-input" id="ar-name" placeholder="Drill, Hammer…" /></div>
+    <div><div class="add-label">Spec</div><input class="add-input" id="ar-spec" placeholder="18V, 16oz…" /></div>
+    <div><div class="add-label">Status</div><select class="add-select" id="ar-status"><option value="Available">Available</option><option value="In Use">In Use</option><option value="Broken">Broken</option></select></div>
+    <div><div class="add-label">Team</div><select class="add-select" id="ar-team"><option value="">Unassigned</option></select></div>
+    <div class="add-actions" style="padding-top:18px"><button class="add-save" onclick="saveAddRow()">Save</button><button class="add-cancel" onclick="cancelAddRow()">Cancel</button></div>
   </div>
 </div>
 
@@ -643,26 +343,17 @@ body::after {
 <div id="editModal" style="display:none">
   <div class="overlay" onclick="if(event.target===this)closeEditModal()">
     <div class="modal">
-      <div class="modal-titlebar">
-        <span id="editModalTitle">Edit Ladder</span>
-        <button class="modal-close" onclick="closeEditModal()">✕</button>
-      </div>
+      <div class="modal-header"><div class="modal-title" id="editModalTitle">Edit Tool</div><button class="modal-close" onclick="closeEditModal()">✕</button></div>
       <div class="modal-body">
         <div class="field-row">
-          <div class="field"><label class="field-label">Ladder ID</label><input class="field-input" id="e-id" /></div>
-          <div class="field"><label class="field-label">Size / Type</label><input class="field-input" id="e-size" /></div>
+          <div class="field"><label class="field-label">Tool ID</label><input class="field-input" id="e-id" /></div>
+          <div class="field"><label class="field-label">Tool Name</label><input class="field-input" id="e-name" /></div>
         </div>
         <div class="field-row">
-          <div class="field">
-            <label class="field-label">Status</label>
-            <select class="field-select" id="e-status"><option>Available</option><option>In Use</option><option>Broken</option></select>
-          </div>
-          <div class="field">
-            <label class="field-label">Team</label>
-            <select class="field-select" id="e-team"><option value="">Unassigned</option></select>
-          </div>
+          <div class="field"><label class="field-label">Spec / Size</label><input class="field-input" id="e-spec" /></div>
+          <div class="field"><label class="field-label">Status</label><select class="field-select" id="e-status"><option>Available</option><option>In Use</option><option>Broken</option></select></div>
         </div>
-        <div class="field"><label class="field-label">Notes</label><input class="field-input" id="e-notes" /></div>
+        <div class="field"><label class="field-label">Team</label><select class="field-select" id="e-team"><option value="">Unassigned</option></select></div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-ghost" onclick="closeEditModal()">Cancel</button>
@@ -676,10 +367,7 @@ body::after {
 <div id="teamModal" style="display:none">
   <div class="overlay" onclick="if(event.target===this)closeTeamModal()">
     <div class="modal">
-      <div class="modal-titlebar">
-        <span>New Team</span>
-        <button class="modal-close" onclick="closeTeamModal()">✕</button>
-      </div>
+      <div class="modal-header"><div class="modal-title">New Team</div><button class="modal-close" onclick="closeTeamModal()">✕</button></div>
       <div class="modal-body">
         <div class="field"><label class="field-label">Team Name</label><input class="field-input" id="t-name" placeholder="e.g. Abraham" /></div>
       </div>
@@ -691,204 +379,232 @@ body::after {
   </div>
 </div>
 
+<!-- QR SCANNER MODAL -->
+<div id="scannerModal" style="display:none">
+  <div class="overlay" onclick="if(event.target===this)closeScanner()">
+    <div class="scanner-modal">
+      <div class="modal-header"><div class="modal-title">📷 Scan Tool QR Code</div><button class="modal-close" onclick="closeScanner()">✕</button></div>
+      <div class="scanner-video-wrap scanner-modal">
+        <video id="scannerVideo" autoplay playsinline muted></video>
+        <div class="scanner-aim"><div class="scanner-box"></div></div>
+      </div>
+      <div class="scanner-status" id="scannerStatus">Point camera at a tool QR code</div>
+    </div>
+  </div>
+</div>
+
+<!-- CHECKOUT MODAL -->
+<div id="checkoutModal" style="display:none">
+  <div class="overlay" onclick="if(event.target===this)closeCheckout()">
+    <div class="modal">
+      <div class="modal-header"><div class="modal-title" id="coModalTitle">Tool Found</div><button class="modal-close" onclick="closeCheckout()">✕</button></div>
+      <div class="modal-body">
+        <div class="co-tool-id" id="coToolId"></div>
+        <div class="co-tool-name" id="coToolName"></div>
+        <div class="quick-grid">
+          <button class="qa-btn qa-out" onclick="quickAction('In Use')"><span class="qa-icon">📤</span>Check Out</button>
+          <button class="qa-btn qa-in" onclick="quickAction('Available')"><span class="qa-icon">📥</span>Check In</button>
+          <button class="qa-btn qa-broken" onclick="quickAction('Broken')"><span class="qa-icon">🔧</span>Mark Broken</button>
+        </div>
+        <div class="co-status-row">
+          <span>Current status:</span>
+          <span id="coCurrentStatus"></span>
+          <span style="margin-left:auto;color:var(--ink-light)" id="coTeamName"></span>
+        </div>
+        <div class="field" style="margin-top:12px">
+          <label class="field-label">Assign to Team</label>
+          <select class="field-select" id="co-team"><option value="">Unassigned</option></select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeCheckout()">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
-const SK = 'laddertrack_v2';
+// ── SUPABASE CONFIG ────────────────────────────────────────────────────────
+const SUPA_URL = 'https://xplfgywxvtbkyefpqwfe.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhwbGZneXd4dnRia3llZnBxd2ZlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2OTMwNjYsImV4cCI6MjA4OTI2OTA2Nn0.3WqA-9VVAcCZ8chfKAd-aZf55P1dzZBZOkYJkB7HZ8c';
+const H = { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
 
-function defaultState() {
-  return {
-    teams: [
-      { id: 'abraham', name: 'Abraham' },
-      { id: 'louis', name: 'Louis' },
-      { id: 'jacob', name: 'Jacob' },
-      { id: 'daegan', name: 'Daegan' },
-      { id: 'keegan', name: 'Keegan' },
-      { id: 'jonathan', name: 'Jonathan' },
-      { id: 'braden', name: 'Braden' },
-      { id: 'treycen', name: 'Treycen' },
-    ],
-    ladders: [
-      { id: 'AF-6-01',  size: "6' A-Frame",         status: 'Available', team: '', notes: '' },
-      { id: 'AF-6-02',  size: "6' A-Frame",         status: 'Available', team: '', notes: '' },
-      { id: 'AF-6-03',  size: "6' A-Frame",         status: 'Available', team: '', notes: '' },
-      { id: 'AF-6-04',  size: "6' A-Frame",         status: 'Available', team: '', notes: '' },
-      { id: 'AF-6-05',  size: "6' A-Frame",         status: 'Available', team: '', notes: '' },
-      { id: 'AF-6-06',  size: "6' A-Frame",         status: 'Available', team: '', notes: '' },
-      { id: 'AF-6-07',  size: "6' A-Frame",         status: 'Available', team: '', notes: '' },
-      { id: 'AF-6-08',  size: "6' A-Frame",         status: 'Available', team: '', notes: '' },
-      { id: 'AF-6-09',  size: "6' A-Frame",         status: 'In Use',   team: 'daegan', notes: 'Blue' },
-      { id: 'AF-6-10',  size: "6' A-Frame",         status: 'In Use',   team: 'daegan', notes: 'Orange' },
-      { id: 'AF-6-11',  size: "6' A-Frame",         status: 'Available', team: '', notes: '' },
-      { id: 'AF-6-12',  size: "6' A-Frame",         status: 'Available', team: '', notes: '' },
-      { id: 'AF-6-13',  size: "6' A-Frame",         status: 'Available', team: '', notes: '' },
-      { id: 'AF-6-14',  size: "6' A-Frame",         status: 'Available', team: '', notes: '' },
-      { id: 'AF-6-15',  size: "6' A-Frame",         status: 'Available', team: '', notes: '' },
-      { id: 'AF-6-16',  size: "6' A-Frame",         status: 'Available', team: '', notes: '' },
-      { id: 'AF-6-17',  size: "6' A-Frame",         status: 'Available', team: '', notes: '' },
-      { id: 'AF-6-18',  size: "6' A-Frame",         status: 'Available', team: '', notes: '' },
-      { id: 'AF-6-19',  size: "6' A-Frame",         status: 'Available', team: '', notes: '' },
-      { id: 'AF-4-20',  size: "4' A-Frame",         status: 'Available', team: '', notes: '' },
-      { id: 'AF-4-21',  size: "4' A-Frame",         status: 'Available', team: '', notes: '' },
-      { id: 'AF-8-22',  size: "8' A-Frame",         status: 'Available', team: '', notes: '' },
-      { id: 'AF-8-23',  size: "8' A-Frame",         status: 'Available', team: '', notes: '' },
-      { id: 'AF-8-24',  size: "8' A-Frame",         status: 'Available', team: '', notes: '' },
-      { id: 'AF-8-25',  size: "8' A-Frame",         status: 'Available', team: '', notes: '' },
-      { id: 'AF-8-26',  size: "8' A-Frame",         status: 'Available', team: '', notes: '' },
-      { id: 'AF-8-27',  size: "8' A-Frame",         status: 'Available', team: '', notes: '' },
-      { id: 'AF-8-28',  size: "8' A-Frame",         status: 'Available', team: '', notes: '' },
-      { id: 'AF-8-29',  size: "8' A-Frame",         status: 'Available', team: '', notes: '' },
-      { id: 'EL-40-30', size: "40' Extension",      status: 'Available', team: '', notes: 'Stickered' },
-      { id: 'EL-24-31', size: "24' Extension",      status: 'Available', team: '', notes: '' },
-      { id: 'MP-7-32',  size: "7' Multi-Position",  status: 'Available', team: '', notes: '' },
-      { id: 'MP-9-33',  size: "9' Multi-Position",  status: 'Available', team: '', notes: '' },
-      { id: 'MP-9-34',  size: "9' Multi-Position",  status: 'Available', team: '', notes: '' },
-      { id: 'MP-9-35',  size: "9' Multi-Position",  status: 'Available', team: '', notes: '' },
-      { id: 'MP-11-36', size: "11' Multi-Position", status: 'Available', team: '', notes: '' },
-      { id: 'MP-13-37', size: "13' Multi-Position", status: 'Available', team: '', notes: '' },
-      { id: 'MP-13-38', size: "13' Multi-Position", status: 'Available', team: '', notes: '' },
-      { id: 'SS-17-39', size: "17' SkyScraper",     status: 'Available', team: '', notes: '' },
-      { id: 'SS-17-40', size: "17' SkyScraper",     status: 'Available', team: '', notes: '' },
-      { id: 'SS-21-41', size: "21' SkyScraper",     status: 'Available', team: '', notes: '' },
-    ]
-  };
+async function dbGet(table, params = '') {
+  const r = await fetch(`${SUPA_URL}/rest/v1/${table}?${params}`, { headers: H });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+async function dbInsert(table, data) {
+  const r = await fetch(`${SUPA_URL}/rest/v1/${table}`, { method: 'POST', headers: H, body: JSON.stringify(data) });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+async function dbUpdate(table, id, data) {
+  const r = await fetch(`${SUPA_URL}/rest/v1/${table}?id=eq.${encodeURIComponent(id)}`, { method: 'PATCH', headers: H, body: JSON.stringify(data) });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+async function dbDelete(table, id) {
+  const r = await fetch(`${SUPA_URL}/rest/v1/${table}?id=eq.${encodeURIComponent(id)}`, { method: 'DELETE', headers: H });
+  if (!r.ok) throw new Error(await r.text());
 }
 
-function load() {
-  try { const r = localStorage.getItem(SK); if (r) return JSON.parse(r); } catch(e) {}
-  return defaultState();
-}
-function save() { localStorage.setItem(SK, JSON.stringify(state)); }
-
-let state = load();
+// ── STATE ──────────────────────────────────────────────────────────────────
+let teams = [];
+let tools = [];
 let activeTeam = null;
 let activeStatus = 'all';
 let activeType = 'all';
 let editingId = null;
 let showAddRow = false;
+let checkoutTool = null;
+let scannerStream = null;
+let scannerAnimFrame = null;
 
-const teamName = id => id ? (state.teams.find(t => t.id === id)?.name || '—') : 'Unassigned';
+function setSyncStatus(state) {
+  const dot = document.getElementById('syncDot');
+  const lbl = document.getElementById('syncLabel');
+  dot.className = 'sync-dot ' + state;
+  lbl.textContent = state === 'ok' ? 'live' : state === 'syncing' ? 'syncing…' : 'offline';
+}
 
-function filteredLadders() {
-  let l = state.ladders;
-  if (activeTeam !== null) l = l.filter(x => x.team === activeTeam);
-  if (activeStatus !== 'all') l = l.filter(x => x.status === activeStatus);
-  if (activeType !== 'all') l = l.filter(x => x.size.includes(activeType));
+// ── LOAD DATA ──────────────────────────────────────────────────────────────
+async function loadAll() {
+  setSyncStatus('syncing');
+  try {
+    [teams, tools] = await Promise.all([
+      dbGet('teams', 'order=name'),
+      dbGet('tools', 'order=id')
+    ]);
+    setSyncStatus('ok');
+    render();
+  } catch(e) {
+    setSyncStatus('err');
+    console.error(e);
+  }
+}
+
+// ── RENDER ─────────────────────────────────────────────────────────────────
+function teamName(id) {
+  if (!id) return 'Unassigned';
+  return teams.find(t => t.id === id)?.name || '—';
+}
+
+const TEAM_COLORS = ['var(--t0)','var(--t1)','var(--t2)','var(--t3)','var(--t4)','var(--t5)','var(--t6)','var(--t7)'];
+function teamColor(id) {
+  if (!id) return '#9ca3af';
+  const idx = teams.findIndex(t => t.id === id);
+  return idx >= 0 ? TEAM_COLORS[idx % 8] : '#9ca3af';
+}
+
+function filteredTools() {
+  let t = tools;
+  if (activeTeam !== null) t = t.filter(x => (x.team_id || '') === activeTeam);
+  if (activeStatus !== 'all') t = t.filter(x => x.status === activeStatus);
+  if (activeType !== 'all') t = t.filter(x => x.status === activeType);
   const q = document.getElementById('searchInput')?.value.toLowerCase() || '';
-  if (q) l = l.filter(x => x.id.toLowerCase().includes(q) || x.size.toLowerCase().includes(q));
-  return l;
+  if (q) t = t.filter(x => x.id.toLowerCase().includes(q) || x.name.toLowerCase().includes(q));
+  return t;
 }
 
-function statusStamp(s) {
-  if (s === 'Available') return `<span class="stamp stamp-avail">Available</span>`;
-  if (s === 'In Use')    return `<span class="stamp stamp-inuse">In Use</span>`;
-  return                        `<span class="stamp stamp-broken">Broken</span>`;
-}
-
-function render() {
-  renderTopStats();
-  renderSidebar();
-  renderTable();
-}
+function render() { renderTopStats(); renderSidebar(); renderTable(); }
 
 function renderTopStats() {
-  const l = state.ladders;
-  const avail  = l.filter(x => x.status === 'Available').length;
-  const inuse  = l.filter(x => x.status === 'In Use').length;
-  const broken = l.filter(x => x.status === 'Broken').length;
+  const avail = tools.filter(x => x.status === 'Available').length;
+  const inuse = tools.filter(x => x.status === 'In Use').length;
+  const broken = tools.filter(x => x.status === 'Broken').length;
   document.getElementById('topStats').innerHTML = `
-    <div class="tstat"><div class="tstat-num w">${l.length}</div><div class="tstat-label">Total</div></div>
+    <div class="tstat"><div class="tstat-num k">${tools.length}</div><div class="tstat-label">Total</div></div>
     <div class="tstat"><div class="tstat-num g">${avail}</div><div class="tstat-label">Available</div></div>
     <div class="tstat"><div class="tstat-num b">${inuse}</div><div class="tstat-label">In Use</div></div>
     <div class="tstat"><div class="tstat-num r">${broken}</div><div class="tstat-label">Broken</div></div>
-    <div class="tstat"><div class="tstat-num w">${state.teams.length}</div><div class="tstat-label">Teams</div></div>
-  `;
+    <div class="tstat"><div class="tstat-num k">${teams.length}</div><div class="tstat-label">Teams</div></div>`;
 }
 
 function renderSidebar() {
   const rows = [
-    { id: null, name: 'All Ladders', count: state.ladders.length },
-    ...state.teams.map(t => ({
+    { id: null, name: 'All Tools', count: tools.length },
+    ...teams.map(t => ({
       id: t.id, name: t.name,
-      count:  state.ladders.filter(l => l.team === t.id).length,
-      avail:  state.ladders.filter(l => l.team === t.id && l.status === 'Available').length,
-      inuse:  state.ladders.filter(l => l.team === t.id && l.status === 'In Use').length,
-      broken: state.ladders.filter(l => l.team === t.id && l.status === 'Broken').length,
+      count: tools.filter(l => l.team_id === t.id).length,
+      avail: tools.filter(l => l.team_id === t.id && l.status === 'Available').length,
+      inuse: tools.filter(l => l.team_id === t.id && l.status === 'In Use').length,
+      broken: tools.filter(l => l.team_id === t.id && l.status === 'Broken').length,
     })),
-    {
-      id: '', name: 'Unassigned',
-      count:  state.ladders.filter(l => !l.team).length,
-      avail:  state.ladders.filter(l => !l.team && l.status === 'Available').length,
-      inuse:  state.ladders.filter(l => !l.team && l.status === 'In Use').length,
-      broken: state.ladders.filter(l => !l.team && l.status === 'Broken').length,
+    { id: '', name: 'Unassigned',
+      count: tools.filter(l => !l.team_id).length,
+      avail: tools.filter(l => !l.team_id && l.status === 'Available').length,
+      inuse: tools.filter(l => !l.team_id && l.status === 'In Use').length,
+      broken: tools.filter(l => !l.team_id && l.status === 'Broken').length,
     }
   ];
-
-  document.getElementById('teamNav').innerHTML = rows.map(t => `
+  document.getElementById('teamNav').innerHTML = rows.map((t, i) => `
     <div class="team-nav-item ${activeTeam === t.id ? 'active' : ''}" onclick="setTeam(${JSON.stringify(t.id)})">
+      <div class="team-nav-dot" style="background:${t.id === null ? '#9ca3af' : TEAM_COLORS[(i-1+8)%8]}"></div>
       <div class="team-nav-name">${t.name}</div>
-      ${t.id !== null ? `<div class="team-status-dots">
-        ${t.avail  ? `<div class="sdot g"></div>` : ''}
-        ${t.inuse  ? `<div class="sdot b"></div>` : ''}
-        ${t.broken ? `<div class="sdot r"></div>` : ''}
-      </div>` : ''}
       <div class="team-nav-count">${t.count}</div>
-    </div>
-  `).join('');
+    </div>`).join('');
+}
+
+function statusBadge(s) {
+  if (s === 'Available') return `<span class="badge badge-avail"><span class="badge-dot"></span>Available</span>`;
+  if (s === 'In Use') return `<span class="badge badge-inuse"><span class="badge-dot"></span>In Use</span>`;
+  return `<span class="badge badge-broken"><span class="badge-dot"></span>Broken</span>`;
+}
+
+function fmtDate(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' });
 }
 
 function renderTable() {
-  const ladders = filteredLadders();
+  const list = filteredTools();
   const body = document.getElementById('ledgerBody');
-
   document.getElementById('manifestTitle').textContent =
-    activeTeam === null ? 'All Ladders' :
-    activeTeam === ''   ? 'Unassigned'  : teamName(activeTeam);
-  document.getElementById('manifestMeta').textContent =
-    `${ladders.length} ladder${ladders.length !== 1 ? 's' : ''} shown`;
+    activeTeam === null ? 'All Tools' : activeTeam === '' ? 'Unassigned' : teamName(activeTeam);
+  document.getElementById('manifestMeta').textContent = `${list.length} tool${list.length !== 1 ? 's' : ''} shown`;
 
-  if (ladders.length === 0) {
-    body.innerHTML = `<div class="empty-ledger"><div class="empty-big">No Records</div>No ladders match the current filters.</div>`;
-    positionAddRow(body);
-    return;
+  if (list.length === 0) {
+    body.innerHTML = `<div class="empty-state"><div class="empty-icon">🔧</div><div class="empty-msg">No tools found</div><div class="empty-sub">No tools match the current filters.</div></div>`;
+    positionAddRow(body); return;
   }
 
   let html = '';
-
   if (activeTeam === null) {
     const groups = {};
-    ladders.forEach(l => { const k = l.team || ''; if (!groups[k]) groups[k]=[]; groups[k].push(l); });
-    const order = [...state.teams.map(t => t.id), ''];
+    list.forEach(l => { const k = l.team_id || ''; if (!groups[k]) groups[k] = []; groups[k].push(l); });
+    const order = [...teams.map(t => t.id), ''];
     order.forEach(tid => {
       const grp = groups[tid];
-      if (!grp || !grp.length) return;
-      html += `<div class="group-header">
-        <div class="gh-name">${tid ? teamName(tid) : 'Unassigned'}</div>
-        <div class="gh-rule"></div>
-        <div class="gh-count">${grp.length} ladder${grp.length !== 1 ? 's' : ''}</div>
-      </div>`;
+      if (!grp?.length) return;
+      const color = tid ? teamColor(tid) : '#9ca3af';
+      html += `<div class="group-block"><div class="group-header"><div class="group-color" style="background:${color}"></div><div class="group-name">${tid ? teamName(tid) : 'Unassigned'}</div><div class="group-count">${grp.length} tool${grp.length !== 1 ? 's' : ''}</div></div><div class="table-head"><div class="th">ID</div><div class="th">Name</div><div class="th">Spec</div><div class="th">Status</div><div class="th">Team</div><div class="th">Last Out</div><div class="th"></div></div>`;
       grp.forEach((l, i) => { html += rowHtml(l, i); });
+      html += `</div>`;
     });
   } else {
-    ladders.forEach((l, i) => { html += rowHtml(l, i); });
+    const color = activeTeam ? teamColor(activeTeam) : '#9ca3af';
+    html += `<div class="group-block"><div class="table-head"><div class="th">ID</div><div class="th">Name</div><div class="th">Spec</div><div class="th">Status</div><div class="th">Team</div><div class="th">Last Out</div><div class="th"></div></div>`;
+    list.forEach((l, i) => { html += rowHtml(l, i); });
+    html += `</div>`;
   }
-
   body.innerHTML = html;
   positionAddRow(body);
 }
 
 function rowHtml(l, i) {
-  return `<div class="ledger-row" style="animation-delay:${Math.min(i,20)*0.02}s">
+  const tid = l.team_id || '';
+  return `<div class="table-row" style="animation-delay:${Math.min(i,20)*0.02}s">
     <div class="cell-id">${l.id}</div>
-    <div class="cell-size">${l.size}</div>
-    <div>${statusStamp(l.status)}</div>
-    <div class="cell-team">${l.team ? teamName(l.team) : '<span style="color:var(--ink-light);font-weight:400;font-style:italic">—</span>'}</div>
-    <div class="cell-notes">${l.notes || ''}</div>
-    <div class="cell-actions">
-      <button class="row-btn" onclick="openEdit('${l.id}')" title="Edit">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-      </button>
-      <button class="row-btn del" onclick="deleteLadder('${l.id}')" title="Delete">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
-      </button>
+    <div class="cell-name">${l.name}</div>
+    <div class="cell-spec">${l.spec || ''}</div>
+    <div>${statusBadge(l.status)}</div>
+    <div class="cell-team" style="color:${tid ? teamColor(tid) : 'var(--text-light)'}">${tid ? teamName(tid) : '—'}</div>
+    <div class="cell-date">${fmtDate(l.last_checked_out)}</div>
+    <div class="row-actions">
+      <button class="icon-btn ${l.status === 'In Use' ? 'in' : 'out'}" onclick="quickToggle('${l.id}')" title="${l.status === 'In Use' ? 'Check In' : 'Check Out'}">${l.status === 'In Use' ? '📥' : '📤'}</button>
+      <button class="icon-btn" onclick="openEdit('${l.id}')" title="Edit">✎</button>
+      <button class="icon-btn del" onclick="deleteTool('${l.id}')" title="Delete">🗑</button>
     </div>
   </div>`;
 }
@@ -896,34 +612,53 @@ function rowHtml(l, i) {
 function positionAddRow(body) {
   const ar = document.getElementById('addRowEl');
   if (!showAddRow) { ar.style.display = 'none'; return; }
-  ar.style.display = 'grid';
-  (body || document.getElementById('ledgerBody')).appendChild(ar);
+  ar.style.display = 'block';
+  const wrap = document.getElementById('ledgerWrap');
+  if (wrap) wrap.insertBefore(ar, wrap.firstChild);
 }
 
+// ── FILTERS ────────────────────────────────────────────────────────────────
 function setTeam(id) { activeTeam = id; render(); }
 
 function setStatusFilter(s) {
   activeStatus = s;
-  document.querySelectorAll('.status-filter').forEach(b => {
-    b.classList.remove('active');
-    if (b.dataset.s === s) b.classList.add('active');
+  const classMap = { all: 'active-all', Available: 'active-avail', 'In Use': 'active-inuse', Broken: 'active-broken' };
+  document.querySelectorAll('.filter-pill').forEach(b => {
+    b.classList.remove('active-all','active-avail','active-inuse','active-broken');
+    if (b.dataset.s === s) b.classList.add(classMap[s]);
   });
-  render();
+  renderTable();
 }
 
 function setTypeFilter(t) {
   activeType = t;
-  document.querySelectorAll('.type-filter-btn').forEach(b => {
+  document.querySelectorAll('.sidebar-filter-btn').forEach(b => {
     b.classList.remove('active');
     if (b.dataset.type === t) b.classList.add('active');
   });
-  render();
+  renderTable();
 }
 
+// ── TEAM CRUD ──────────────────────────────────────────────────────────────
+function openTeamModal() { document.getElementById('t-name').value = ''; document.getElementById('teamModal').style.display = 'block'; setTimeout(() => document.getElementById('t-name').focus(), 50); }
+function closeTeamModal() { document.getElementById('teamModal').style.display = 'none'; }
+
+async function saveTeam() {
+  const name = document.getElementById('t-name').value.trim();
+  if (!name) return;
+  const id = name.toLowerCase().replace(/\s+/g, '_') + '_' + Date.now();
+  setSyncStatus('syncing');
+  try {
+    await dbInsert('teams', { id, name });
+    await loadAll();
+    closeTeamModal();
+  } catch(e) { setSyncStatus('err'); alert('Error: ' + e.message); }
+}
+
+// ── TOOL CRUD ──────────────────────────────────────────────────────────────
 function populateTeamSelects(selectedId = '') {
-  const opts = '<option value="">Unassigned</option>' +
-    state.teams.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
-  ['ar-team', 'e-team'].forEach(id => {
+  const opts = '<option value="">Unassigned</option>' + teams.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+  ['ar-team', 'e-team', 'co-team'].forEach(id => {
     const el = document.getElementById(id);
     if (el) { el.innerHTML = opts; el.value = selectedId; }
   });
@@ -932,78 +667,201 @@ function populateTeamSelects(selectedId = '') {
 function openAddRow() {
   showAddRow = true;
   populateTeamSelects(activeTeam || '');
-  ['ar-id','ar-size','ar-notes'].forEach(id => document.getElementById(id).value = '');
+  ['ar-id','ar-name','ar-spec'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('ar-status').value = 'Available';
-  render();
+  document.getElementById('addRowEl').style.display = 'block';
   setTimeout(() => document.getElementById('ar-id').focus(), 60);
+  renderTable();
 }
-
 function cancelAddRow() { showAddRow = false; render(); }
 
-function saveAddRow() {
-  const id    = document.getElementById('ar-id').value.trim();
-  const size  = document.getElementById('ar-size').value.trim();
-  const status= document.getElementById('ar-status').value;
-  const team  = document.getElementById('ar-team').value;
-  const notes = document.getElementById('ar-notes').value.trim();
-  if (!id || !size) { document.getElementById(!id ? 'ar-id' : 'ar-size').focus(); return; }
-  if (state.ladders.find(l => l.id === id)) { alert('ID already exists.'); return; }
-  state.ladders.push({ id, size, status, team, notes });
-  save(); showAddRow = false; render();
+async function saveAddRow() {
+  const id = document.getElementById('ar-id').value.trim();
+  const name = document.getElementById('ar-name').value.trim();
+  const spec = document.getElementById('ar-spec').value.trim();
+  const status = document.getElementById('ar-status').value;
+  const team_id = document.getElementById('ar-team').value || null;
+  if (!id || !name) { document.getElementById(!id ? 'ar-id' : 'ar-name').focus(); return; }
+  if (tools.find(l => l.id === id)) { alert('ID already exists.'); return; }
+  setSyncStatus('syncing');
+  try {
+    await dbInsert('tools', { id, name, spec, status, team_id });
+    await loadAll();
+    showAddRow = false;
+  } catch(e) { setSyncStatus('err'); alert('Error: ' + e.message); }
 }
 
 function openEdit(id) {
-  const l = state.ladders.find(x => x.id === id);
+  const l = tools.find(x => x.id === id);
   if (!l) return;
   editingId = id;
   document.getElementById('editModalTitle').textContent = `Edit — ${id}`;
-  document.getElementById('e-id').value     = l.id;
-  document.getElementById('e-size').value   = l.size;
+  document.getElementById('e-id').value = l.id;
+  document.getElementById('e-name').value = l.name;
+  document.getElementById('e-spec').value = l.spec || '';
   document.getElementById('e-status').value = l.status;
-  document.getElementById('e-notes').value  = l.notes;
-  populateTeamSelects(l.team);
+  populateTeamSelects(l.team_id || '');
   document.getElementById('editModal').style.display = 'block';
 }
-
 function closeEditModal() { document.getElementById('editModal').style.display = 'none'; }
 
-function saveEdit() {
-  const idx = state.ladders.findIndex(l => l.id === editingId);
-  if (idx < 0) return;
-  state.ladders[idx] = {
-    id:     document.getElementById('e-id').value.trim(),
-    size:   document.getElementById('e-size').value.trim(),
+async function saveEdit() {
+  const data = {
+    id: document.getElementById('e-id').value.trim(),
+    name: document.getElementById('e-name').value.trim(),
+    spec: document.getElementById('e-spec').value.trim(),
     status: document.getElementById('e-status').value,
-    team:   document.getElementById('e-team').value,
-    notes:  document.getElementById('e-notes').value.trim(),
+    team_id: document.getElementById('e-team').value || null,
   };
-  save(); closeEditModal(); render();
+  setSyncStatus('syncing');
+  try {
+    await dbUpdate('tools', editingId, data);
+    await loadAll();
+    closeEditModal();
+  } catch(e) { setSyncStatus('err'); alert('Error: ' + e.message); }
 }
 
-function deleteLadder(id) {
+async function deleteTool(id) {
   if (!confirm(`Remove ${id} from the manifest?`)) return;
-  state.ladders = state.ladders.filter(l => l.id !== id);
-  save(); render();
+  setSyncStatus('syncing');
+  try { await dbDelete('tools', id); await loadAll(); }
+  catch(e) { setSyncStatus('err'); alert('Error: ' + e.message); }
 }
 
-function openTeamModal() {
-  document.getElementById('t-name').value = '';
-  document.getElementById('teamModal').style.display = 'block';
-  setTimeout(() => document.getElementById('t-name').focus(), 50);
+// ── QUICK TOGGLE ───────────────────────────────────────────────────────────
+async function quickToggle(id) {
+  const tool = tools.find(x => x.id === id);
+  if (!tool) return;
+  const newStatus = tool.status === 'In Use' ? 'Available' : 'In Use';
+  const data = { status: newStatus };
+  if (newStatus === 'In Use') data.last_checked_out = new Date().toISOString();
+  setSyncStatus('syncing');
+  try { await dbUpdate('tools', id, data); await loadAll(); }
+  catch(e) { setSyncStatus('err'); alert('Error: ' + e.message); }
 }
 
-function closeTeamModal() { document.getElementById('teamModal').style.display = 'none'; }
-
-function saveTeam() {
-  const name = document.getElementById('t-name').value.trim();
-  if (!name) return;
-  const id = name.toLowerCase().replace(/\s+/g, '_') + '_' + Date.now();
-  state.teams.push({ id, name });
-  save(); closeTeamModal(); render();
+// ── QR SCANNER ────────────────────────────────────────────────────────────
+async function openScanner() {
+  document.getElementById('scannerModal').style.display = 'block';
+  document.getElementById('scannerStatus').textContent = 'Starting camera…';
+  try {
+    scannerStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    const video = document.getElementById('scannerVideo');
+    video.srcObject = scannerStream;
+    await video.play();
+    document.getElementById('scannerStatus').textContent = 'Point camera at a tool QR code';
+    scanFrame();
+  } catch(e) {
+    document.getElementById('scannerStatus').textContent = 'Camera access denied. Check browser permissions.';
+  }
 }
 
+function scanFrame() {
+  const video = document.getElementById('scannerVideo');
+  if (!video || video.readyState < 2) { scannerAnimFrame = requestAnimationFrame(scanFrame); return; }
+  const canvas = document.createElement('canvas');
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0);
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
+  if (code) {
+    const val = code.data.trim();
+    closeScanner();
+    handleScan(val);
+    return;
+  }
+  scannerAnimFrame = requestAnimationFrame(scanFrame);
+}
+
+function closeScanner() {
+  if (scannerAnimFrame) { cancelAnimationFrame(scannerAnimFrame); scannerAnimFrame = null; }
+  if (scannerStream) { scannerStream.getTracks().forEach(t => t.stop()); scannerStream = null; }
+  document.getElementById('scannerModal').style.display = 'none';
+}
+
+function handleScan(val) {
+  // val should be the tool ID
+  const tool = tools.find(t => t.id === val);
+  if (!tool) {
+    alert(`QR code scanned: "${val}"\nNo tool found with this ID. Make sure the QR code contains exactly the Tool ID (e.g. TL-001).`);
+    return;
+  }
+  openCheckout(tool);
+}
+
+// ── CHECKOUT MODAL ────────────────────────────────────────────────────────
+function openCheckout(tool) {
+  checkoutTool = tool;
+  document.getElementById('coToolId').textContent = tool.id;
+  document.getElementById('coToolName').textContent = tool.name + (tool.spec ? ' — ' + tool.spec : '');
+  document.getElementById('coCurrentStatus').innerHTML = statusStamp(tool.status);
+  document.getElementById('coTeamName').textContent = tool.team_id ? teamName(tool.team_id) : 'Unassigned';
+  populateTeamSelects(tool.team_id || '');
+  document.getElementById('checkoutModal').style.display = 'block';
+}
+function closeCheckout() { document.getElementById('checkoutModal').style.display = 'none'; checkoutTool = null; }
+
+async function quickAction(newStatus) {
+  if (!checkoutTool) return;
+  const team_id = document.getElementById('co-team').value || null;
+  const data = { status: newStatus, team_id };
+  if (newStatus === 'In Use') data.last_checked_out = new Date().toISOString();
+  setSyncStatus('syncing');
+  try {
+    await dbUpdate('tools', checkoutTool.id, data);
+    await loadAll();
+    closeCheckout();
+  } catch(e) { setSyncStatus('err'); alert('Error: ' + e.message); }
+}
+
+
+// ── ADMIN / QR ────────────────────────────────────────────────────────────
+let adminVisible = false;
+
+function toggleAdmin() {
+  adminVisible = !adminVisible;
+  document.getElementById('adminPage').classList.toggle('visible', adminVisible);
+  document.getElementById('adminBtn').textContent = adminVisible ? '← Tracker' : '⚙ QR Admin';
+  // Hide/show main layout content
+  document.querySelector('.main').style.display = adminVisible ? 'none' : 'flex';
+  document.querySelector('.sidebar').style.display = adminVisible ? 'none' : 'flex';
+  if (adminVisible) renderQRCodes();
+}
+
+function renderQRCodes() {
+  const grid = document.getElementById('qrGrid');
+  grid.innerHTML = '';
+  const sorted = [...tools].sort((a, b) => a.id.localeCompare(b.id));
+  sorted.forEach(tool => {
+    const card = document.createElement('div');
+    card.className = 'qr-card';
+    const wrap = document.createElement('div');
+    wrap.className = 'qr-canvas-wrap';
+    card.innerHTML = `
+      <div class="qr-card-id">${tool.id}</div>
+      <div class="qr-card-name">${tool.name}</div>
+      ${tool.spec ? `<div class="qr-card-spec">${tool.spec}</div>` : ''}
+    `;
+    card.insertBefore(wrap, card.firstChild);
+    grid.appendChild(card);
+    try {
+      new QRCode(wrap, {
+        text: tool.id,
+        width: 120,
+        height: 120,
+        colorDark: '#1c1a17',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    } catch(e) { wrap.textContent = '[QR Error]'; }
+  });
+}
+
+// ── KEYBOARD ──────────────────────────────────────────────────────────────
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { closeEditModal(); closeTeamModal(); cancelAddRow(); }
+  if (e.key === 'Escape') { closeEditModal(); closeTeamModal(); closeScanner(); closeCheckout(); cancelAddRow(); }
   if (e.key === 'Enter') {
     if (document.getElementById('editModal').style.display !== 'none') saveEdit();
     else if (document.getElementById('teamModal').style.display !== 'none') saveTeam();
@@ -1011,7 +869,12 @@ document.addEventListener('keydown', e => {
   }
 });
 
-render();
+// ── REALTIME POLL ─────────────────────────────────────────────────────────
+// Poll every 15 seconds so all devices stay in sync
+setInterval(loadAll, 15000);
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+loadAll();
 </script>
 </body>
 </html>
