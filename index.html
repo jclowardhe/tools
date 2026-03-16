@@ -256,6 +256,149 @@ body { font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--te
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
 ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+
+/* ═══════════════════════════════════════
+   MOBILE RESPONSIVE
+═══════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* ── TOPBAR ── */
+  .topbar { padding: 0 12px; height: 52px; }
+  .app-subtitle { display: none; }
+  .topbar-stats { display: none; }
+  .topbar-actions { gap: 6px; }
+  .sync-pill { display: none; }
+  .btn { padding: 7px 11px; font-size: 12px; }
+  .btn-ghost { display: none; }
+
+  /* ── LAYOUT: hide sidebar, full-width main ── */
+  .sidebar { display: none; }
+  .main { width: 100%; }
+
+  /* ── BOTTOM NAV BAR ── */
+  .bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    z-index: 100;
+    box-shadow: 0 -2px 12px rgba(0,0,0,0.08);
+    height: 60px;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .bnav-item {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 3px; cursor: pointer;
+    font-size: 10px; font-weight: 700;
+    color: var(--text-light);
+    border: none; background: transparent;
+    transition: color 0.15s;
+    font-family: 'Nunito', sans-serif;
+  }
+  .bnav-item.active { color: var(--accent); }
+  .bnav-item .bnav-icon { font-size: 20px; line-height: 1; }
+  .bnav-scan {
+    background: var(--accent);
+    color: #fff !important;
+    border-radius: 16px;
+    margin: 6px 8px;
+    flex: 1.4;
+    box-shadow: 0 4px 12px rgba(37,99,235,0.35);
+  }
+
+  /* ── PAGE HEADER ── */
+  .page-header { padding: 14px 16px 12px; flex-direction: column; align-items: flex-start; gap: 10px; }
+  .page-title { font-size: 18px; }
+  .filter-bar { width: 100%; }
+  .search-input { flex: 1; min-width: 0; }
+  .filter-pill { font-size: 11px; padding: 4px 10px; }
+
+  /* ── LEDGER WRAP ── */
+  .ledger-wrap { padding: 12px 12px 80px; }
+
+  /* ── HIDE TABLE HEADER, SHOW CARDS ── */
+  .table-head { display: none; }
+  .table-row {
+    display: flex !important;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px 14px;
+    border-radius: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .table-row:last-child { border-bottom: none; }
+
+  .cell-id { font-size: 11px; color: var(--text-light); order: -1; }
+  .cell-name { font-size: 15px; font-weight: 800; order: -1; }
+  .cell-spec { font-size: 12px; }
+  .cell-team { font-size: 12px; font-weight: 700; }
+  .cell-date { font-size: 11px; }
+
+  /* Show a quick status + team row */
+  .mobile-row-meta { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
+
+  /* Row actions always visible on mobile */
+  .row-actions { opacity: 1 !important; margin-top: 4px; justify-content: flex-start; gap: 8px; }
+  .icon-btn { width: 34px; height: 34px; font-size: 15px; border-radius: 8px; }
+
+  /* ── GROUP BLOCKS ── */
+  .group-block { border-radius: 10px; margin-bottom: 12px; }
+  .group-header { padding: 10px 14px; }
+  .group-name { font-size: 11px; }
+
+  /* ── ADD ROW ── */
+  .add-row-wrap { padding: 14px; border-radius: 10px; margin-bottom: 12px; }
+  .add-row-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .add-row-grid > div:nth-child(1) { grid-column: span 2; }
+  .add-row-grid > div:nth-child(2) { grid-column: span 2; }
+  .add-actions { grid-column: span 2; justify-content: flex-end; }
+
+  /* ── MODALS ── */
+  .modal { border-radius: 20px 20px 0 0; width: 100% !important; max-width: 100% !important; position: fixed; bottom: 0; left: 0; right: 0; margin: 0; }
+  .overlay { align-items: flex-end; }
+  .scanner-modal { border-radius: 20px 20px 0 0; width: 100% !important; max-width: 100% !important; position: fixed; bottom: 0; left: 0; right: 0; }
+  .scanner-video-wrap { border-radius: 0; }
+  .field-row { grid-template-columns: 1fr; }
+  .quick-grid { grid-template-columns: 1fr 1fr 1fr; }
+
+  /* ── MOBILE TEAM DRAWER ── */
+  .team-drawer {
+    display: none;
+    position: fixed; inset: 0; z-index: 150;
+  }
+  .team-drawer.open { display: flex; flex-direction: column; }
+  .team-drawer-overlay { flex: 1; background: rgba(0,0,0,0.4); }
+  .team-drawer-panel {
+    background: var(--surface);
+    border-radius: 20px 20px 0 0;
+    padding: 8px 0 24px;
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+  .team-drawer-handle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 8px auto 16px; }
+  .team-drawer-title { font-size: 16px; font-weight: 800; padding: 0 20px 12px; border-bottom: 1px solid var(--border); margin-bottom: 8px; }
+  .team-drawer-item { display: flex; align-items: center; gap: 12px; padding: 12px 20px; cursor: pointer; }
+  .team-drawer-item:active { background: var(--bg); }
+  .team-drawer-dot { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+  .team-drawer-name { font-size: 15px; font-weight: 700; flex: 1; }
+  .team-drawer-count { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-light); background: var(--bg); padding: 2px 8px; border-radius: 10px; }
+  .team-drawer-item.active .team-drawer-name { color: var(--accent); }
+  .team-drawer-item.active .team-drawer-count { background: var(--blue-bg); color: var(--blue); }
+
+  /* admin page on mobile */
+  .admin-body { padding: 12px 12px 80px; }
+  .qr-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .admin-header { padding: 12px 16px; }
+  .admin-title { font-size: 17px; }
+}
+
+@media (min-width: 769px) {
+  .bottom-nav { display: none; }
+  .team-drawer { display: none !important; }
+}
+
 </style>
 </head>
 <body>
@@ -873,8 +1016,85 @@ document.addEventListener('keydown', e => {
 // Poll every 15 seconds so all devices stay in sync
 setInterval(loadAll, 15000);
 
+
+// ── MOBILE HELPERS ────────────────────────────────────────────────────────
+function isMobile() { return window.innerWidth <= 768; }
+
+function mobileShowHome() {
+  if (adminVisible) toggleAdmin();
+  document.getElementById('bnavHome')?.classList.add('active');
+  document.getElementById('bnavAdmin')?.classList.remove('active');
+}
+
+function mobileToggleAdmin() {
+  toggleAdmin();
+  if (adminVisible) {
+    document.getElementById('bnavAdmin')?.classList.add('active');
+    document.getElementById('bnavHome')?.classList.remove('active');
+  } else {
+    document.getElementById('bnavHome')?.classList.add('active');
+    document.getElementById('bnavAdmin')?.classList.remove('active');
+  }
+}
+
+function openMobileTeamDrawer() {
+  const list = document.getElementById('teamDrawerList');
+  const rows = [
+    { id: null, name: 'All Tools', count: tools.length },
+    ...teams.map((t, i) => ({
+      id: t.id, name: t.name,
+      count: tools.filter(l => l.team_id === t.id).length,
+      color: TEAM_COLORS[i % 8]
+    })),
+    { id: '', name: 'Unassigned', count: tools.filter(l => !l.team_id).length, color: '#9ca3af' }
+  ];
+  list.innerHTML = rows.map((t, i) => `
+    <div class="team-drawer-item ${activeTeam === t.id ? 'active' : ''}" onclick="mobileSelectTeam(${JSON.stringify(t.id)})">
+      <div class="team-drawer-dot" style="background:${t.color || '#9ca3af'}"></div>
+      <div class="team-drawer-name">${t.name}</div>
+      <div class="team-drawer-count">${t.count}</div>
+    </div>`).join('');
+  document.getElementById('teamDrawer').classList.add('open');
+}
+
+function closeMobileTeamDrawer() {
+  document.getElementById('teamDrawer').classList.remove('open');
+}
+
+function mobileSelectTeam(id) {
+  setTeam(id);
+  closeMobileTeamDrawer();
+}
+
 // ── INIT ──────────────────────────────────────────────────────────────────
 loadAll();
 </script>
+
+<!-- BOTTOM NAV (mobile) -->
+<div class="bottom-nav" id="bottomNav">
+  <button class="bnav-item active" id="bnavHome" onclick="mobileShowHome()">
+    <span class="bnav-icon">🏠</span>Tools
+  </button>
+  <button class="bnav-item bnav-scan" onclick="openScanner()">
+    <span class="bnav-icon">📷</span>Scan
+  </button>
+  <button class="bnav-item" onclick="openMobileTeamDrawer()">
+    <span class="bnav-icon">👥</span>Teams
+  </button>
+  <button class="bnav-item" id="bnavAdmin" onclick="mobileToggleAdmin()">
+    <span class="bnav-icon">⚙️</span>Admin
+  </button>
+</div>
+
+<!-- TEAM DRAWER (mobile) -->
+<div class="team-drawer" id="teamDrawer">
+  <div class="team-drawer-overlay" onclick="closeMobileTeamDrawer()"></div>
+  <div class="team-drawer-panel">
+    <div class="team-drawer-handle"></div>
+    <div class="team-drawer-title">Select Team</div>
+    <div id="teamDrawerList"></div>
+  </div>
+</div>
+
 </body>
 </html>
