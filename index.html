@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ladder Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@400;600;700&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --paper: #faf8f4;
+  --paper2: #f2efe9;
+  --rule: #d8d3c8;
+  --rule-heavy: #b8b0a0;
+  --ink: #1c1a17;
+  --ink-mid: #5c5650;
+  --ink-light: #9c9488;
+  --red: #c0392b;
+  --green: #1e7a3c;
+  --blue: #1a4f9c;
+  --amber: #b8720a;
+  --sidebar-w: 220px;
+}
+
+body {
+  font-family: 'IBM Plex Sans', sans-serif;
+  background: var(--paper2);
+  color: var(--ink);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+}
+
+.topbar {
+  background: var(--ink);
+  color: var(--paper);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  height: 52px;
+  flex-shrink: 0;
+  border-bottom: 3px solid var(--amber);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.topbar-left { display: flex; align-items: baseline; gap: 16px; }
+
+.app-title {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.app-subtitle {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: #888;
+  letter-spacing: 0.05em;
+}
+
+.topbar-stats { display: flex; gap: 28px; align-items: center; }
+
+.tstat { display: flex; align-items: baseline; gap: 6px; }
+
+.tstat-num {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1;
+}
+.tstat-num.g { color: #4caf7d; }
+.tstat-num.b { color: #6b9fd4; }
+.tstat-num.r { color: #e07070; }
+.tstat-num.w { color: var(--paper); }
+
+.tstat-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.topbar-actions { display: flex; gap: 8px; }
+
+.btn {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 7px 14px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.btn-primary { background: var(--amber); color: #fff; }
+.btn-primary:hover { background: #d4830c; }
+.btn-ghost { background: transparent; color: #aaa; border: 1px solid #444; }
+.btn-ghost:hover { border-color: #888; color: var(--paper); }
+
+.layout { display: flex; flex: 1; min-height: 0; }
+
+.sidebar {
+  width: var(--sidebar-w);
+  flex-shrink: 0;
+  background: var(--paper);
+  border-right: 2px solid var(--rule-heavy);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 52px;
+  height: calc(100vh - 52px);
+  overflow-y: auto;
+}
+
+.sidebar-section {
+  padding: 14px 16px 8px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink-light);
+  border-bottom: 1px solid var(--rule);
+}
+
+.team-nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--rule);
+  transition: background 0.1s;
+  gap: 8px;
+}
+.team-nav-item:hover { background: var(--paper2); }
+.team-nav-item.active { background: var(--ink); color: var(--paper); }
+
+.team-nav-name {
+  font-family: 'IBM Plex Sans Condensed', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  flex: 1;
+}
+
+.team-nav-count {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--rule);
+  padding: 1px 6px;
+  border-radius: 2px;
+  color: var(--ink-mid);
+  min-width: 24px;
+  text-align: center;
+}
+.team-nav-item.active .team-nav-count { background: rgba(255,255,255,0.15); color: var(--paper); }
+
+.team-status-dots { display: flex; gap: 3px; align-items: center; }
+.sdot { width: 6px; height: 6px; border-radius: 50%; }
+.sdot.g { background: var(--green); }
+.sdot.b { background: var(--blue); }
+.sdot.r { background: var(--red); }
+.team-nav-item.active .sdot.g { background: #4caf7d; }
+.team-nav-item.active .sdot.b { background: #6b9fd4; }
+.team-nav-item.active .sdot.r { background: #e07070; }
+
+.sidebar-add-team {
+  padding: 10px 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-light);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  border-bottom: 1px solid var(--rule);
+  transition: color 0.12s;
+}
+.sidebar-add-team:hover { color: var(--amber); }
+
+.sidebar-type-filters { padding: 8px 0; border-top: 2px solid var(--rule-heavy); margin-top: auto; }
+
+.type-filter-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 16px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--ink-mid);
+  text-align: left;
+  border-bottom: 1px solid var(--rule);
+  transition: background 0.1s;
+}
+.type-filter-btn:hover { background: var(--paper2); }
+.type-filter-btn.active { background: var(--paper2); color: var(--ink); font-weight: 600; }
+
+.main { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+
+.manifest-header {
+  background: var(--paper);
+  border-bottom: 3px double var(--rule-heavy);
+  padding: 16px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.manifest-title {
+  font-family: 'IBM Plex Sans Condensed', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.manifest-meta {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--ink-light);
+  margin-top: 2px;
+}
+
+.filter-strip { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+
+.status-filter {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 5px 12px;
+  border: 1.5px solid var(--rule-heavy);
+  background: transparent;
+  cursor: pointer;
+  color: var(--ink-mid);
+  transition: all 0.12s;
+}
+.status-filter:hover { border-color: var(--ink); color: var(--ink); }
+.status-filter.f-all.active  { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.status-filter.f-avail.active { background: var(--green); color: #fff; border-color: var(--green); }
+.status-filter.f-inuse.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+.status-filter.f-broken.active { background: var(--red); color: #fff; border-color: var(--red); }
+
+.search-box {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  padding: 5px 10px;
+  border: 1.5px solid var(--rule-heavy);
+  background: var(--paper2);
+  color: var(--ink);
+  outline: none;
+  width: 180px;
+  transition: border-color 0.12s;
+}
+.search-box:focus { border-color: var(--amber); }
+.search-box::placeholder { color: var(--ink-light); }
+
+.ledger { flex: 1; }
+
+.ledger-head {
+  display: grid;
+  grid-template-columns: 110px 160px 120px 150px 1fr 64px;
+  padding: 8px 28px;
+  background: var(--ink);
+  color: var(--paper);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.lh {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #888;
+}
+
+.ledger-body { background: var(--paper); }
+
+.ledger-row {
+  display: grid;
+  grid-template-columns: 110px 160px 120px 150px 1fr 64px;
+  padding: 0 28px;
+  min-height: 42px;
+  align-items: center;
+  border-bottom: 1px solid var(--rule);
+  transition: background 0.08s;
+  animation: rowSlide 0.18s ease both;
+}
+
+@keyframes rowSlide {
+  from { opacity: 0; transform: translateX(-6px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.ledger-row:nth-child(even) { background: #faf8f4; }
+.ledger-row:nth-child(odd)  { background: #fff; }
+.ledger-row:hover { background: #f0ece3 !important; }
+
+.cell-id {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.cell-size {
+  font-family: 'IBM Plex Sans Condensed', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.stamp {
+  display: inline-block;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-width: 1.5px;
+  border-style: solid;
+}
+.stamp-avail { color: var(--green); border-color: var(--green); background: rgba(30,122,60,0.06); }
+.stamp-inuse { color: var(--blue);  border-color: var(--blue);  background: rgba(26,79,156,0.06); }
+.stamp-broken { color: var(--red); border-color: var(--red); background: rgba(192,57,43,0.06); transform: rotate(-1.5deg); display: inline-block; }
+
+.cell-team {
+  font-family: 'IBM Plex Sans Condensed', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-mid);
+}
+
+.cell-notes {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 11px;
+  color: var(--ink-light);
+  font-style: italic;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-right: 8px;
+}
+
+.cell-actions { display: flex; gap: 4px; justify-content: flex-end; opacity: 0; transition: opacity 0.12s; }
+.ledger-row:hover .cell-actions { opacity: 1; }
+
+.row-btn {
+  width: 26px; height: 26px;
+  border: 1.5px solid var(--rule-heavy);
+  background: var(--paper);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--ink-mid);
+  transition: all 0.1s;
+}
+.row-btn:hover { border-color: var(--ink); color: var(--ink); }
+.row-btn.del:hover { border-color: var(--red); color: var(--red); background: rgba(192,57,43,0.06); }
+
+.group-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 28px;
+  background: var(--paper2);
+  border-bottom: 2px solid var(--rule-heavy);
+  border-top: 2px solid var(--rule-heavy);
+}
+
+.gh-name {
+  font-family: 'IBM Plex Sans Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ink-mid);
+}
+.gh-rule { flex: 1; height: 1px; background: var(--rule-heavy); }
+.gh-count { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--ink-light); }
+
+.empty-ledger {
+  padding: 80px 28px;
+  text-align: center;
+  color: var(--ink-light);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+}
+.empty-big {
+  font-family: 'IBM Plex Sans Condensed', sans-serif;
+  font-size: 48px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--rule-heavy);
+  margin-bottom: 8px;
+}
+
+.add-row {
+  display: grid;
+  grid-template-columns: 110px 160px 120px 150px 1fr 64px;
+  padding: 8px 28px;
+  background: #fffdf7;
+  border-top: 2px solid var(--amber);
+  border-bottom: 2px solid var(--amber);
+  align-items: center;
+}
+
+.add-input {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  background: transparent;
+  border: none;
+  border-bottom: 1.5px solid var(--rule-heavy);
+  color: var(--ink);
+  padding: 4px 6px 4px 0;
+  outline: none;
+  width: 95%;
+  transition: border-color 0.12s;
+}
+.add-input:focus { border-color: var(--amber); }
+.add-input::placeholder { color: var(--ink-light); font-style: italic; }
+
+.add-select {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  background: transparent;
+  border: none;
+  border-bottom: 1.5px solid var(--rule-heavy);
+  color: var(--ink);
+  padding: 4px 6px 4px 0;
+  outline: none;
+  width: 95%;
+  cursor: pointer;
+  appearance: none;
+}
+.add-select:focus { border-color: var(--amber); }
+
+.overlay {
+  position: fixed; inset: 0;
+  background: rgba(28,26,23,0.55);
+  z-index: 200;
+  display: flex; align-items: center; justify-content: center;
+  animation: fadeIn 0.15s ease;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.modal {
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  width: 440px;
+  max-width: 95vw;
+  animation: popIn 0.18s ease;
+  position: relative;
+}
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.96) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.modal-titlebar {
+  background: var(--ink);
+  color: var(--paper);
+  padding: 12px 18px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-close {
+  background: transparent; border: none; color: #888;
+  cursor: pointer; font-size: 16px; line-height: 1; padding: 0;
+  transition: color 0.1s;
+}
+.modal-close:hover { color: var(--paper); }
+
+.modal-body { padding: 20px 18px; }
+
+.field { margin-bottom: 14px; }
+
+.field-label {
+  display: block;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink-light);
+  margin-bottom: 5px;
+}
+
+.field-input, .field-select {
+  width: 100%;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  background: var(--paper2);
+  border: 1.5px solid var(--rule-heavy);
+  color: var(--ink);
+  padding: 9px 11px;
+  outline: none;
+  transition: border-color 0.12s;
+  appearance: none;
+}
+.field-input:focus, .field-select:focus { border-color: var(--amber); }
+
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.modal-footer {
+  padding: 12px 18px;
+  border-top: 1px solid var(--rule);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  background: var(--paper2);
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--paper2); }
+::-webkit-scrollbar-thumb { background: var(--rule-heavy); }
+::-webkit-scrollbar-thumb:hover { background: var(--ink-mid); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="app-title">// Ladder Manifest</div>
+    <div class="app-subtitle">field asset tracking</div>
+  </div>
+  <div class="topbar-stats" id="topStats"></div>
+  <div class="topbar-actions">
+    <button class="btn btn-ghost" onclick="openTeamModal()">+ Team</button>
+    <button class="btn btn-primary" onclick="openAddRow()">+ Ladder</button>
+  </div>
+</div>
+
+<div class="layout">
+  <nav class="sidebar">
+    <div class="sidebar-section">Teams</div>
+    <div id="teamNav"></div>
+    <div class="sidebar-add-team" onclick="openTeamModal()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add team
+    </div>
+    <div style="flex:1"></div>
+    <div class="sidebar-type-filters">
+      <div class="sidebar-section" style="border-bottom:none;padding-bottom:6px">Type</div>
+      <button class="type-filter-btn active" data-type="all" onclick="setTypeFilter('all')">All types</button>
+      <button class="type-filter-btn" data-type="A-Frame" onclick="setTypeFilter('A-Frame')">A-Frame</button>
+      <button class="type-filter-btn" data-type="Extension" onclick="setTypeFilter('Extension')">Extension</button>
+      <button class="type-filter-btn" data-type="Multi-Position" onclick="setTypeFilter('Multi-Position')">Multi-Position</button>
+      <button class="type-filter-btn" data-type="SkyScraper" onclick="setTypeFilter('SkyScraper')">SkyScraper</button>
+    </div>
+  </nav>
+
+  <div class="main">
+    <div class="manifest-header">
+      <div>
+        <div class="manifest-title" id="manifestTitle">All Ladders</div>
+        <div class="manifest-meta" id="manifestMeta"></div>
+      </div>
+      <div class="filter-strip">
+        <input class="search-box" type="text" placeholder="Search ID / size…" id="searchInput" oninput="render()">
+        <button class="status-filter f-all active" data-s="all" onclick="setStatusFilter('all')">All</button>
+        <button class="status-filter f-avail" data-s="Available" onclick="setStatusFilter('Available')">Available</button>
+        <button class="status-filter f-inuse" data-s="In Use" onclick="setStatusFilter('In Use')">In Use</button>
+        <button class="status-filter f-broken" data-s="Broken" onclick="setStatusFilter('Broken')">Broken</button>
+      </div>
+    </div>
+
+    <div class="ledger">
+      <div class="ledger-head">
+        <div class="lh">ID</div>
+        <div class="lh">Size / Type</div>
+        <div class="lh">Status</div>
+        <div class="lh">Team</div>
+        <div class="lh">Notes</div>
+        <div class="lh"></div>
+      </div>
+      <div class="ledger-body" id="ledgerBody"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD ROW -->
+<div id="addRowEl" style="display:none" class="add-row">
+  <input class="add-input" id="ar-id" placeholder="AF-6-20" />
+  <input class="add-input" id="ar-size" placeholder="6' A-Frame" />
+  <select class="add-select" id="ar-status">
+    <option value="Available">Available</option>
+    <option value="In Use">In Use</option>
+    <option value="Broken">Broken</option>
+  </select>
+  <select class="add-select" id="ar-team"><option value="">Unassigned</option></select>
+  <input class="add-input" id="ar-notes" placeholder="Notes…" />
+  <div style="display:flex;gap:4px;justify-content:flex-end">
+    <button class="row-btn" onclick="saveAddRow()" title="Save" style="border-color:var(--green);color:var(--green)">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+    </button>
+    <button class="row-btn del" onclick="cancelAddRow()" title="Cancel">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div id="editModal" style="display:none">
+  <div class="overlay" onclick="if(event.target===this)closeEditModal()">
+    <div class="modal">
+      <div class="modal-titlebar">
+        <span id="editModalTitle">Edit Ladder</span>
+        <button class="modal-close" onclick="closeEditModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="field-row">
+          <div class="field"><label class="field-label">Ladder ID</label><input class="field-input" id="e-id" /></div>
+          <div class="field"><label class="field-label">Size / Type</label><input class="field-input" id="e-size" /></div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label class="field-label">Status</label>
+            <select class="field-select" id="e-status"><option>Available</option><option>In Use</option><option>Broken</option></select>
+          </div>
+          <div class="field">
+            <label class="field-label">Team</label>
+            <select class="field-select" id="e-team"><option value="">Unassigned</option></select>
+          </div>
+        </div>
+        <div class="field"><label class="field-label">Notes</label><input class="field-input" id="e-notes" /></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeEditModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveEdit()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TEAM MODAL -->
+<div id="teamModal" style="display:none">
+  <div class="overlay" onclick="if(event.target===this)closeTeamModal()">
+    <div class="modal">
+      <div class="modal-titlebar">
+        <span>New Team</span>
+        <button class="modal-close" onclick="closeTeamModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="field"><label class="field-label">Team Name</label><input class="field-input" id="t-name" placeholder="e.g. Abraham" /></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeTeamModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveTeam()">Add Team</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SK = 'laddertrack_v2';
+
+function defaultState() {
+  return {
+    teams: [
+      { id: 'abraham', name: 'Abraham' },
+      { id: 'louis', name: 'Louis' },
+      { id: 'jacob', name: 'Jacob' },
+      { id: 'daegan', name: 'Daegan' },
+      { id: 'keegan', name: 'Keegan' },
+      { id: 'jonathan', name: 'Jonathan' },
+      { id: 'braden', name: 'Braden' },
+      { id: 'treycen', name: 'Treycen' },
+    ],
+    ladders: [
+      { id: 'AF-6-01',  size: "6' A-Frame",         status: 'Available', team: '', notes: '' },
+      { id: 'AF-6-02',  size: "6' A-Frame",         status: 'Available', team: '', notes: '' },
+      { id: 'AF-6-03',  size: "6' A-Frame",         status: 'Available', team: '', notes: '' },
+      { id: 'AF-6-04',  size: "6' A-Frame",         status: 'Available', team: '', notes: '' },
+      { id: 'AF-6-05',  size: "6' A-Frame",         status: 'Available', team: '', notes: '' },
+      { id: 'AF-6-06',  size: "6' A-Frame",         status: 'Available', team: '', notes: '' },
+      { id: 'AF-6-07',  size: "6' A-Frame",         status: 'Available', team: '', notes: '' },
+      { id: 'AF-6-08',  size: "6' A-Frame",         status: 'Available', team: '', notes: '' },
+      { id: 'AF-6-09',  size: "6' A-Frame",         status: 'In Use',   team: 'daegan', notes: 'Blue' },
+      { id: 'AF-6-10',  size: "6' A-Frame",         status: 'In Use',   team: 'daegan', notes: 'Orange' },
+      { id: 'AF-6-11',  size: "6' A-Frame",         status: 'Available', team: '', notes: '' },
+      { id: 'AF-6-12',  size: "6' A-Frame",         status: 'Available', team: '', notes: '' },
+      { id: 'AF-6-13',  size: "6' A-Frame",         status: 'Available', team: '', notes: '' },
+      { id: 'AF-6-14',  size: "6' A-Frame",         status: 'Available', team: '', notes: '' },
+      { id: 'AF-6-15',  size: "6' A-Frame",         status: 'Available', team: '', notes: '' },
+      { id: 'AF-6-16',  size: "6' A-Frame",         status: 'Available', team: '', notes: '' },
+      { id: 'AF-6-17',  size: "6' A-Frame",         status: 'Available', team: '', notes: '' },
+      { id: 'AF-6-18',  size: "6' A-Frame",         status: 'Available', team: '', notes: '' },
+      { id: 'AF-6-19',  size: "6' A-Frame",         status: 'Available', team: '', notes: '' },
+      { id: 'AF-4-20',  size: "4' A-Frame",         status: 'Available', team: '', notes: '' },
+      { id: 'AF-4-21',  size: "4' A-Frame",         status: 'Available', team: '', notes: '' },
+      { id: 'AF-8-22',  size: "8' A-Frame",         status: 'Available', team: '', notes: '' },
+      { id: 'AF-8-23',  size: "8' A-Frame",         status: 'Available', team: '', notes: '' },
+      { id: 'AF-8-24',  size: "8' A-Frame",         status: 'Available', team: '', notes: '' },
+      { id: 'AF-8-25',  size: "8' A-Frame",         status: 'Available', team: '', notes: '' },
+      { id: 'AF-8-26',  size: "8' A-Frame",         status: 'Available', team: '', notes: '' },
+      { id: 'AF-8-27',  size: "8' A-Frame",         status: 'Available', team: '', notes: '' },
+      { id: 'AF-8-28',  size: "8' A-Frame",         status: 'Available', team: '', notes: '' },
+      { id: 'AF-8-29',  size: "8' A-Frame",         status: 'Available', team: '', notes: '' },
+      { id: 'EL-40-30', size: "40' Extension",      status: 'Available', team: '', notes: 'Stickered' },
+      { id: 'EL-24-31', size: "24' Extension",      status: 'Available', team: '', notes: '' },
+      { id: 'MP-7-32',  size: "7' Multi-Position",  status: 'Available', team: '', notes: '' },
+      { id: 'MP-9-33',  size: "9' Multi-Position",  status: 'Available', team: '', notes: '' },
+      { id: 'MP-9-34',  size: "9' Multi-Position",  status: 'Available', team: '', notes: '' },
+      { id: 'MP-9-35',  size: "9' Multi-Position",  status: 'Available', team: '', notes: '' },
+      { id: 'MP-11-36', size: "11' Multi-Position", status: 'Available', team: '', notes: '' },
+      { id: 'MP-13-37', size: "13' Multi-Position", status: 'Available', team: '', notes: '' },
+      { id: 'MP-13-38', size: "13' Multi-Position", status: 'Available', team: '', notes: '' },
+      { id: 'SS-17-39', size: "17' SkyScraper",     status: 'Available', team: '', notes: '' },
+      { id: 'SS-17-40', size: "17' SkyScraper",     status: 'Available', team: '', notes: '' },
+      { id: 'SS-21-41', size: "21' SkyScraper",     status: 'Available', team: '', notes: '' },
+    ]
+  };
+}
+
+function load() {
+  try { const r = localStorage.getItem(SK); if (r) return JSON.parse(r); } catch(e) {}
+  return defaultState();
+}
+function save() { localStorage.setItem(SK, JSON.stringify(state)); }
+
+let state = load();
+let activeTeam = null;
+let activeStatus = 'all';
+let activeType = 'all';
+let editingId = null;
+let showAddRow = false;
+
+const teamName = id => id ? (state.teams.find(t => t.id === id)?.name || '—') : 'Unassigned';
+
+function filteredLadders() {
+  let l = state.ladders;
+  if (activeTeam !== null) l = l.filter(x => x.team === activeTeam);
+  if (activeStatus !== 'all') l = l.filter(x => x.status === activeStatus);
+  if (activeType !== 'all') l = l.filter(x => x.size.includes(activeType));
+  const q = document.getElementById('searchInput')?.value.toLowerCase() || '';
+  if (q) l = l.filter(x => x.id.toLowerCase().includes(q) || x.size.toLowerCase().includes(q));
+  return l;
+}
+
+function statusStamp(s) {
+  if (s === 'Available') return `<span class="stamp stamp-avail">Available</span>`;
+  if (s === 'In Use')    return `<span class="stamp stamp-inuse">In Use</span>`;
+  return                        `<span class="stamp stamp-broken">Broken</span>`;
+}
+
+function render() {
+  renderTopStats();
+  renderSidebar();
+  renderTable();
+}
+
+function renderTopStats() {
+  const l = state.ladders;
+  const avail  = l.filter(x => x.status === 'Available').length;
+  const inuse  = l.filter(x => x.status === 'In Use').length;
+  const broken = l.filter(x => x.status === 'Broken').length;
+  document.getElementById('topStats').innerHTML = `
+    <div class="tstat"><div class="tstat-num w">${l.length}</div><div class="tstat-label">Total</div></div>
+    <div class="tstat"><div class="tstat-num g">${avail}</div><div class="tstat-label">Available</div></div>
+    <div class="tstat"><div class="tstat-num b">${inuse}</div><div class="tstat-label">In Use</div></div>
+    <div class="tstat"><div class="tstat-num r">${broken}</div><div class="tstat-label">Broken</div></div>
+    <div class="tstat"><div class="tstat-num w">${state.teams.length}</div><div class="tstat-label">Teams</div></div>
+  `;
+}
+
+function renderSidebar() {
+  const rows = [
+    { id: null, name: 'All Ladders', count: state.ladders.length },
+    ...state.teams.map(t => ({
+      id: t.id, name: t.name,
+      count:  state.ladders.filter(l => l.team === t.id).length,
+      avail:  state.ladders.filter(l => l.team === t.id && l.status === 'Available').length,
+      inuse:  state.ladders.filter(l => l.team === t.id && l.status === 'In Use').length,
+      broken: state.ladders.filter(l => l.team === t.id && l.status === 'Broken').length,
+    })),
+    {
+      id: '', name: 'Unassigned',
+      count:  state.ladders.filter(l => !l.team).length,
+      avail:  state.ladders.filter(l => !l.team && l.status === 'Available').length,
+      inuse:  state.ladders.filter(l => !l.team && l.status === 'In Use').length,
+      broken: state.ladders.filter(l => !l.team && l.status === 'Broken').length,
+    }
+  ];
+
+  document.getElementById('teamNav').innerHTML = rows.map(t => `
+    <div class="team-nav-item ${activeTeam === t.id ? 'active' : ''}" onclick="setTeam(${JSON.stringify(t.id)})">
+      <div class="team-nav-name">${t.name}</div>
+      ${t.id !== null ? `<div class="team-status-dots">
+        ${t.avail  ? `<div class="sdot g"></div>` : ''}
+        ${t.inuse  ? `<div class="sdot b"></div>` : ''}
+        ${t.broken ? `<div class="sdot r"></div>` : ''}
+      </div>` : ''}
+      <div class="team-nav-count">${t.count}</div>
+    </div>
+  `).join('');
+}
+
+function renderTable() {
+  const ladders = filteredLadders();
+  const body = document.getElementById('ledgerBody');
+
+  document.getElementById('manifestTitle').textContent =
+    activeTeam === null ? 'All Ladders' :
+    activeTeam === ''   ? 'Unassigned'  : teamName(activeTeam);
+  document.getElementById('manifestMeta').textContent =
+    `${ladders.length} ladder${ladders.length !== 1 ? 's' : ''} shown`;
+
+  if (ladders.length === 0) {
+    body.innerHTML = `<div class="empty-ledger"><div class="empty-big">No Records</div>No ladders match the current filters.</div>`;
+    positionAddRow(body);
+    return;
+  }
+
+  let html = '';
+
+  if (activeTeam === null) {
+    const groups = {};
+    ladders.forEach(l => { const k = l.team || ''; if (!groups[k]) groups[k]=[]; groups[k].push(l); });
+    const order = [...state.teams.map(t => t.id), ''];
+    order.forEach(tid => {
+      const grp = groups[tid];
+      if (!grp || !grp.length) return;
+      html += `<div class="group-header">
+        <div class="gh-name">${tid ? teamName(tid) : 'Unassigned'}</div>
+        <div class="gh-rule"></div>
+        <div class="gh-count">${grp.length} ladder${grp.length !== 1 ? 's' : ''}</div>
+      </div>`;
+      grp.forEach((l, i) => { html += rowHtml(l, i); });
+    });
+  } else {
+    ladders.forEach((l, i) => { html += rowHtml(l, i); });
+  }
+
+  body.innerHTML = html;
+  positionAddRow(body);
+}
+
+function rowHtml(l, i) {
+  return `<div class="ledger-row" style="animation-delay:${Math.min(i,20)*0.02}s">
+    <div class="cell-id">${l.id}</div>
+    <div class="cell-size">${l.size}</div>
+    <div>${statusStamp(l.status)}</div>
+    <div class="cell-team">${l.team ? teamName(l.team) : '<span style="color:var(--ink-light);font-weight:400;font-style:italic">—</span>'}</div>
+    <div class="cell-notes">${l.notes || ''}</div>
+    <div class="cell-actions">
+      <button class="row-btn" onclick="openEdit('${l.id}')" title="Edit">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      </button>
+      <button class="row-btn del" onclick="deleteLadder('${l.id}')" title="Delete">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+      </button>
+    </div>
+  </div>`;
+}
+
+function positionAddRow(body) {
+  const ar = document.getElementById('addRowEl');
+  if (!showAddRow) { ar.style.display = 'none'; return; }
+  ar.style.display = 'grid';
+  (body || document.getElementById('ledgerBody')).appendChild(ar);
+}
+
+function setTeam(id) { activeTeam = id; render(); }
+
+function setStatusFilter(s) {
+  activeStatus = s;
+  document.querySelectorAll('.status-filter').forEach(b => {
+    b.classList.remove('active');
+    if (b.dataset.s === s) b.classList.add('active');
+  });
+  render();
+}
+
+function setTypeFilter(t) {
+  activeType = t;
+  document.querySelectorAll('.type-filter-btn').forEach(b => {
+    b.classList.remove('active');
+    if (b.dataset.type === t) b.classList.add('active');
+  });
+  render();
+}
+
+function populateTeamSelects(selectedId = '') {
+  const opts = '<option value="">Unassigned</option>' +
+    state.teams.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+  ['ar-team', 'e-team'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.innerHTML = opts; el.value = selectedId; }
+  });
+}
+
+function openAddRow() {
+  showAddRow = true;
+  populateTeamSelects(activeTeam || '');
+  ['ar-id','ar-size','ar-notes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('ar-status').value = 'Available';
+  render();
+  setTimeout(() => document.getElementById('ar-id').focus(), 60);
+}
+
+function cancelAddRow() { showAddRow = false; render(); }
+
+function saveAddRow() {
+  const id    = document.getElementById('ar-id').value.trim();
+  const size  = document.getElementById('ar-size').value.trim();
+  const status= document.getElementById('ar-status').value;
+  const team  = document.getElementById('ar-team').value;
+  const notes = document.getElementById('ar-notes').value.trim();
+  if (!id || !size) { document.getElementById(!id ? 'ar-id' : 'ar-size').focus(); return; }
+  if (state.ladders.find(l => l.id === id)) { alert('ID already exists.'); return; }
+  state.ladders.push({ id, size, status, team, notes });
+  save(); showAddRow = false; render();
+}
+
+function openEdit(id) {
+  const l = state.ladders.find(x => x.id === id);
+  if (!l) return;
+  editingId = id;
+  document.getElementById('editModalTitle').textContent = `Edit — ${id}`;
+  document.getElementById('e-id').value     = l.id;
+  document.getElementById('e-size').value   = l.size;
+  document.getElementById('e-status').value = l.status;
+  document.getElementById('e-notes').value  = l.notes;
+  populateTeamSelects(l.team);
+  document.getElementById('editModal').style.display = 'block';
+}
+
+function closeEditModal() { document.getElementById('editModal').style.display = 'none'; }
+
+function saveEdit() {
+  const idx = state.ladders.findIndex(l => l.id === editingId);
+  if (idx < 0) return;
+  state.ladders[idx] = {
+    id:     document.getElementById('e-id').value.trim(),
+    size:   document.getElementById('e-size').value.trim(),
+    status: document.getElementById('e-status').value,
+    team:   document.getElementById('e-team').value,
+    notes:  document.getElementById('e-notes').value.trim(),
+  };
+  save(); closeEditModal(); render();
+}
+
+function deleteLadder(id) {
+  if (!confirm(`Remove ${id} from the manifest?`)) return;
+  state.ladders = state.ladders.filter(l => l.id !== id);
+  save(); render();
+}
+
+function openTeamModal() {
+  document.getElementById('t-name').value = '';
+  document.getElementById('teamModal').style.display = 'block';
+  setTimeout(() => document.getElementById('t-name').focus(), 50);
+}
+
+function closeTeamModal() { document.getElementById('teamModal').style.display = 'none'; }
+
+function saveTeam() {
+  const name = document.getElementById('t-name').value.trim();
+  if (!name) return;
+  const id = name.toLowerCase().replace(/\s+/g, '_') + '_' + Date.now();
+  state.teams.push({ id, name });
+  save(); closeTeamModal(); render();
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeEditModal(); closeTeamModal(); cancelAddRow(); }
+  if (e.key === 'Enter') {
+    if (document.getElementById('editModal').style.display !== 'none') saveEdit();
+    else if (document.getElementById('teamModal').style.display !== 'none') saveTeam();
+    else if (showAddRow && document.activeElement?.closest('#addRowEl')) saveAddRow();
+  }
+});
+
+render();
+</script>
+</body>
+</html>
