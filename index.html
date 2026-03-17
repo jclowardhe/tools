@@ -861,6 +861,21 @@ function renderTable() {
 
 function rowHtml(l, i) {
   const tid = l.team_id || '';
+  const isInUse = l.status === 'In Use';
+  const canAct = currentForeman && (
+    isForeman() || isAdmin() ||
+    (isCrewLead() && (!tid || tid === currentForeman.team_id))
+  );
+  const actionBtn = canAct
+    ? (isInUse
+        ? `<button class="action-btn checkin-btn" onclick="quickToggle('${l.id}')">✓ Check In</button>`
+        : `<button class="action-btn checkout-btn" onclick="quickToggle('${l.id}')">→ Check Out</button>`)
+    : '';
+  const canEdit = currentForeman?.is_admin || isForeman();
+  const editBtns = canEdit ? `
+    <button class="icon-btn" onclick="openEdit('${l.id}')" title="Edit">✎</button>
+    <button class="icon-btn del" onclick="deleteTool('${l.id}')" title="Delete">🗑</button>
+  ` : '';
   return `<div class="table-row" style="animation-delay:${Math.min(i,20)*0.02}s">
     <div class="cell-id">${l.id}</div>
     <div class="cell-name">${l.name}</div>
@@ -868,10 +883,8 @@ function rowHtml(l, i) {
     <div>${statusBadge(l.status)}</div>
     <div class="cell-team" style="color:${tid ? teamColor(tid) : 'var(--text-light)'}">${tid ? teamName(tid) : '—'}</div>
     <div class="cell-date">${fmtDate(l.last_checked_out)}</div>
-    <div class="row-actions">
-      <button class="icon-btn ${l.status === 'In Use' ? 'in' : 'out'}" onclick="quickToggle('${l.id}')" title="${l.status === 'In Use' ? 'Check In' : 'Check Out'}">${l.status === 'In Use' ? '📥' : '📤'}</button>
-      <button class="icon-btn" onclick="openEdit('${l.id}')" title="Edit">✎</button>
-      ${currentForeman?.is_admin ? '<button class="icon-btn del" onclick="deleteTool(\''+ l.id +'\')" title="Delete">🗑</button>' : ''}
+    <div style="display:flex;align-items:center;gap:6px;justify-content:flex-end;">
+      ${actionBtn}${editBtns}
     </div>
   </div>`;
 }
