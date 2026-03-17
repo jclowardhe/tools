@@ -102,10 +102,10 @@ body { font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--te
 }
 .team-nav-item:hover { background: var(--bg); }
 .team-nav-item.active { background: var(--blue-bg); border-left-color: var(--blue); }
-.team-nav-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
-.team-nav-name { font-size: 13px; font-weight: 700; color: var(--text); flex: 1; }
+.team-nav-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; pointer-events: none; }
+.team-nav-name { font-size: 13px; font-weight: 700; color: var(--text); flex: 1; pointer-events: none; }
 .team-nav-item.active .team-nav-name { color: var(--blue); }
-.team-nav-count { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; color: var(--text-light); background: var(--bg); padding: 1px 7px; border-radius: 10px; }
+.team-nav-count { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; color: var(--text-light); background: var(--bg); padding: 1px 7px; border-radius: 10px; pointer-events: none; }
 .team-nav-item.active .team-nav-count { background: var(--blue-border); color: var(--blue); }
 .team-nav-alerts { display: flex; gap: 3px; }
 .alert-dot { width: 6px; height: 6px; border-radius: 50%; }
@@ -113,7 +113,7 @@ body { font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--te
 .sidebar-add-btn { margin: 8px 12px; padding: 8px; border: 1.5px dashed var(--border); border-radius: 8px; background: transparent; cursor: pointer; font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 700; color: var(--text-light); display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.15s; }
 .sidebar-add-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--blue-bg); }
 .sidebar-divider { height: 1px; background: var(--border); margin: 8px 0; }
-.sidebar-filter-btn { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 8px 16px; font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 700; background: transparent; border: none; cursor: pointer; color: var(--text-mid); transition: background 0.1s; border-left: 3px solid transparent; }
+.sidebar-filter-btn { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 8px 16px; font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 700; background: transparent; border: none; cursor: pointer; color: var(--text-mid); transition: background 0.1s; border-left: 3px solid transparent; pointer-events: auto; }
 .sidebar-filter-btn:hover { background: var(--bg); }
 .sidebar-filter-btn.active { background: var(--bg); color: var(--text); border-left-color: var(--border-strong); }
 
@@ -821,12 +821,16 @@ function renderSidebar() {
       broken: tools.filter(l => !l.team_id && l.status === 'Broken').length,
     }
   ];
-  document.getElementById('teamNav').innerHTML = rows.map((t, i) => `
-    <div class="team-nav-item ${activeTeam === t.id ? 'active' : ''}" onclick="setTeam(${JSON.stringify(t.id)})">
-      <div class="team-nav-dot" style="background:${t.id === null ? '#9ca3af' : TEAM_COLORS[(i-1+8)%8]}"></div>
+  document.getElementById('teamNav').innerHTML = rows.map((t, i) => {
+    const teamArg = t.id === null ? 'null' : "'" + t.id + "'";
+    const active = activeTeam === t.id ? 'active' : '';
+    const color = t.id === null ? '#9ca3af' : TEAM_COLORS[(i-1+8)%8];
+    return `<div class="team-nav-item ${active}" onclick="setTeam(${teamArg})">
+      <div class="team-nav-dot" style="background:${color}"></div>
       <div class="team-nav-name">${t.name}</div>
       <div class="team-nav-count">${t.count}</div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 function statusStamp(s) { return statusBadge(s); }
