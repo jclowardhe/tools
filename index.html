@@ -1145,7 +1145,9 @@ function closeCheckout() { document.getElementById('checkoutModal').style.displa
 async function quickAction(newStatus) {
   if (!checkoutTool) return;
   if (!currentForeman) { alert('Please sign in first.'); return; }
-  const team_id = document.getElementById('co-team').value || currentForeman.team_id || null;
+  // Check out: assign to selected/foreman's team. Check in: release back to pool
+  const selectedTeam = document.getElementById('co-team').value || null;
+  const team_id = newStatus === 'In Use' ? (selectedTeam || currentForeman.team_id || null) : null;
   const data = { status: newStatus, team_id };
   if (newStatus === 'In Use') data.last_checked_out = new Date().toISOString();
   const actionLabel = newStatus === 'In Use' ? 'Checked Out' : newStatus === 'Available' ? 'Checked In' : 'Marked Broken';
