@@ -1338,10 +1338,8 @@ async function attemptLogin() {
   const roleLabel = foreman.is_admin ? 'Admin' : foreman.role === 'foreman' ? 'Foreman' : 'Crew Lead';
   const roleEl = document.getElementById('currentUserRole'); if(roleEl) roleEl.textContent = ' · ' + roleLabel;
 
-  // Auto-filter to own team for crew leads
-  if (foreman.role === 'crew_lead' && foreman.team_id) {
-    activeTeam = foreman.team_id;
-  }
+  // Everyone starts on All Tools
+  activeTeam = null;
   render();
 }
 
