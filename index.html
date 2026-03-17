@@ -1013,18 +1013,23 @@ async function deleteTool(id) {
 
 // ── QUICK TOGGLE ───────────────────────────────────────────────────────────
 async function quickToggle(id) {
-  const tool = tools.find(x => x.id === id);
-  if (!tool) return;
   if (!currentForeman) { alert('Please sign in first.'); return; }
+  setSyncStatus('syncing');
+  // Always fetch fresh status from DB to avoid stale toggle
+  let freshTools;
+  try { freshTools = await dbGet('tools', `id=eq.${encodeURIComponent(id)}`); }
+  catch(e) { setSyncStatus('err'); alert('Error: ' + e.message); return; }
+  const tool = freshTools[0];
+  if (!tool) return;
   // Crew leads can only check out/in their own team's tools
-  if (isCrewLead() && tool.team_id && tool.team_id !== currentForeman.team_id && tool.team_id !== '') {
+  if (isCrewLead() && tool.team_id && tool.team_id !== currentForeman.team_id) {
     alert('You can only check out tools assigned to your team.');
+    setSyncStatus('ok');
     return;
   }
   const newStatus = tool.status === 'In Use' ? 'Available' : 'In Use';
   const data = { status: newStatus, team_id: currentForeman.team_id || tool.team_id };
   if (newStatus === 'In Use') data.last_checked_out = new Date().toISOString();
-  setSyncStatus('syncing');
   try {
     await dbUpdate('tools', id, data);
     await logHistory(tool, newStatus === 'In Use' ? 'Checked Out' : 'Checked In');
