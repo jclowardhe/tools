@@ -445,7 +445,7 @@ body { font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--te
   <div class="topbar-actions">
     <span class="sync-dot" id="syncDot"></span>
     <span class="sync-label" id="syncLabel">connecting…</span>
-    <button class="btn btn-ghost" onclick="currentForeman?.is_admin ? toggleAdmin() : alert('Admin only.')" id="adminBtn">⚙ QR Admin</button>
+    <button class="btn btn-ghost" onclick="canAccessQRAdmin() ? toggleAdmin() : alert('QR Admin is for admins only.')" id="adminBtn">⚙ QR Admin</button>
     <button class="btn btn-scan" onclick="openScanner()">⬜ Scan QR</button>
     <button class="btn btn-ghost admin-only" onclick="openTeamModal()">+ Team</button>
     <button class="btn btn-primary admin-only" onclick="openAddRow()">+ Tool</button>
@@ -713,15 +713,20 @@ function render() {
 }
 
 function updateAdminUI() {
-  const isAdmin = currentForeman?.is_admin;
-  // Show/hide admin-only buttons
+  // admin-only = QR admin panel items (already gated in toggleAdmin)
+  // foreman-only = add/delete tools, change pins
   document.querySelectorAll('.admin-only').forEach(el => {
-    el.style.display = isAdmin ? '' : 'none';
+    el.style.display = canAccessQRAdmin() ? '' : 'none';
   });
-  // Show/hide foreman-only elements
   document.querySelectorAll('.foreman-only').forEach(el => {
-    el.style.display = (!isAdmin && currentForeman) ? '' : 'none';
+    el.style.display = canAddTools() ? '' : 'none';
   });
+  // Show/hide history nav for everyone logged in
+  const histBtn = document.getElementById('historyNavBtn');
+  if (histBtn) histBtn.style.display = currentForeman ? '' : 'none';
+  // Show/hide bottom nav history
+  const bnavH = document.getElementById('bnavHistory');
+  if (bnavH) bnavH.style.display = currentForeman ? '' : 'none';
 }
 
 function renderTopStats() {
@@ -859,7 +864,7 @@ function openTeamModal() { document.getElementById('t-name').value = ''; documen
 function closeTeamModal() { document.getElementById('teamModal').style.display = 'none'; }
 
 async function saveTeam() {
-  if (!currentForeman?.is_admin) { alert('Only admins can add teams.'); return; }
+  if (!canAddTools()) { alert('Only foremen and admins can add teams.'); return; }
   const name = document.getElementById('t-name').value.trim();
   if (!name) return;
   const id = name.toLowerCase().replace(/\s+/g, '_') + '_' + Date.now();
@@ -908,7 +913,7 @@ async function saveAddRow() {
 }
 
 function openEdit(id) {
-  if (!currentForeman?.is_admin) { alert('Only admins can edit tools.'); return; }
+  if (!canAddTools()) { alert('Only foremen and admins can edit tools.'); return; }
   const l = tools.find(x => x.id === id);
   if (!l) return;
   editingId = id;
@@ -939,6 +944,7 @@ async function saveEdit() {
 }
 
 async function deleteTool(id) {
+  if (!canDeleteTools()) { alert('Only foremen and admins can delete tools.'); return; }
   if (!confirm(`Remove ${id} from the manifest?`)) return;
   setSyncStatus('syncing');
   try { await dbDelete('tools', id); await loadAll(); }
@@ -950,6 +956,11 @@ async function quickToggle(id) {
   const tool = tools.find(x => x.id === id);
   if (!tool) return;
   if (!currentForeman) { alert('Please sign in first.'); return; }
+  // Crew leads can only check out/in their own team's tools
+  if (isCrewLead() && tool.team_id && tool.team_id !== currentForeman.team_id && tool.team_id !== '') {
+    alert('You can only check out tools assigned to your team.');
+    return;
+  }
   const newStatus = tool.status === 'In Use' ? 'Available' : 'In Use';
   const data = { status: newStatus, team_id: currentForeman.team_id || tool.team_id };
   if (newStatus === 'In Use') data.last_checked_out = new Date().toISOString();
@@ -1117,7 +1128,7 @@ function renderForemenList() {
   list.innerHTML = foremen.map(f => `
     <div style="display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;padding:12px 18px;border-bottom:1px solid #f3f4f6;">
       <div>
-        <div style="font-size:14px;font-weight:700;color:#111827;font-family:'Nunito',sans-serif;">${f.name} ${f.is_admin ? '<span style="font-size:10px;background:#eff6ff;color:#2563eb;padding:2px 8px;border-radius:10px;font-weight:800;letter-spacing:0.05em;">ADMIN</span>' : ''}</div>
+        <div style="font-size:14px;font-weight:700;color:#111827;font-family:'Nunito',sans-serif;">${f.name} ${f.is_admin ? '<span style="font-size:10px;background:#eff6ff;color:#2563eb;padding:2px 8px;border-radius:10px;font-weight:800;letter-spacing:0.05em;">ADMIN</span>' : f.role === 'foreman' ? '<span style="font-size:10px;background:#f0fdf4;color:#16a34a;padding:2px 8px;border-radius:10px;font-weight:800;">FOREMAN</span>' : '<span style="font-size:10px;background:#f9fafb;color:#6b7280;padding:2px 8px;border-radius:10px;font-weight:800;">CREW LEAD</span>'}</div>
         <div style="font-size:11px;color:#9ca3af;font-family:'JetBrains Mono',monospace;margin-top:2px;">${f.team_id ? teamName(f.team_id) : 'No team'}</div>
       </div>
       <div style="font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:600;color:#374151;background:#f3f4f6;padding:4px 12px;border-radius:8px;letter-spacing:0.2em;">${f.pin}</div>
@@ -1126,6 +1137,7 @@ function renderForemenList() {
 }
 
 async function editForeman(id) {
+  if (!canChangePins()) { alert('Only foremen and admins can change PINs.'); return; }
   const f = foremen.find(x => x.id === id);
   if (!f) return;
   const newPin = prompt(`Change PIN for ${f.name}\nCurrent PIN: ${f.pin}\n\nEnter new 4-digit PIN:`);
@@ -1154,6 +1166,16 @@ function toggleAdmin() {
 // ── AUTH & FOREMEN ────────────────────────────────────────────────────────
 let foremen = [];
 let currentForeman = null;
+
+function isAdmin() { return currentForeman?.is_admin === true; }
+function isForeman() { return currentForeman?.role === 'foreman' || currentForeman?.is_admin === true; }
+function isCrewLead() { return currentForeman?.role === 'crew_lead'; }
+function canCheckoutAnyTeam() { return isForeman(); }
+function canAddTools() { return isForeman(); }
+function canDeleteTools() { return isForeman(); }
+function canChangePins() { return isForeman(); }
+function canSeeHistory() { return true; } // everyone can see history
+function canAccessQRAdmin() { return isAdmin(); }
 
 async function loadForemen() {
   try {
@@ -1207,9 +1229,11 @@ async function attemptLogin() {
   currentForeman = foreman;
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('currentUserName').textContent = foreman.name;
+  const roleLabel = foreman.is_admin ? 'Admin' : foreman.role === 'foreman' ? 'Foreman' : 'Crew Lead';
+  document.getElementById('currentUserRole').textContent = ' · ' + roleLabel;
 
-  // If foreman, auto-filter to their team
-  if (!foreman.is_admin && foreman.team_id) {
+  // Auto-filter to own team for crew leads
+  if (foreman.role === 'crew_lead' && foreman.team_id) {
     activeTeam = foreman.team_id;
   }
   render();
@@ -1263,8 +1287,8 @@ function fmtDateTime(d) {
 }
 
 function showHistoryPanel() {
-  if (!currentForeman?.is_admin) {
-    alert('The activity log is only available to admins.');
+  if (!currentForeman) {
+    alert('Please sign in first.');
     return;
   }
   historyVisible = true;
@@ -1344,7 +1368,7 @@ function mobileShowHome() {
 }
 
 function mobileToggleAdmin() {
-  if (!currentForeman?.is_admin) {
+  if (!canAccessQRAdmin()) {
     alert('QR Admin is only available to admins.');
     return;
   }
