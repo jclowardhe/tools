@@ -144,9 +144,9 @@ body { font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--te
 .group-name { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-mid); flex: 1; }
 .group-count { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-light); }
 
-.table-head { display: grid; grid-template-columns: 110px 1fr 100px 90px 120px 130px 68px; padding: 8px 18px; border-bottom: 1px solid var(--border); }
+.table-head { display: grid; grid-template-columns: 110px 1fr 100px 90px 120px 110px 160px; padding: 8px 18px; border-bottom: 1px solid var(--border); }
 .th { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-light); }
-.table-row { display: grid; grid-template-columns: 110px 1fr 100px 90px 120px 130px 68px; padding: 12px 18px; border-bottom: 1px solid var(--border); align-items: center; transition: background 0.08s; animation: rowIn 0.18s ease both; }
+.table-row { display: grid; grid-template-columns: 110px 1fr 100px 90px 120px 110px 160px; padding: 12px 18px; border-bottom: 1px solid var(--border); align-items: center; transition: background 0.08s; animation: rowIn 0.18s ease both; }
 .table-row:last-child { border-bottom: none; }
 .table-row:hover { background: var(--surface-hover); }
 @keyframes rowIn { from { opacity:0; transform:translateY(3px); } to { opacity:1; transform:translateY(0); } }
@@ -400,6 +400,53 @@ body { font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--te
 }
 
 
+
+
+/* ── ACTION BUTTONS ── */
+.action-btn {
+  font-family: 'Nunito', sans-serif;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 2px solid;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.checkout-btn {
+  background: var(--blue-bg);
+  color: var(--blue);
+  border-color: var(--blue-border);
+}
+.checkout-btn:hover {
+  background: var(--blue);
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(37,99,235,0.25);
+}
+.checkin-btn {
+  background: var(--green-bg);
+  color: var(--green);
+  border-color: var(--green-border);
+}
+.checkin-btn:hover {
+  background: var(--green);
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(22,163,74,0.25);
+}
+.admin-row-btns { display: flex; gap: 4px; opacity: 0; transition: opacity 0.12s; }
+.table-row:hover .admin-row-btns { opacity: 1; }
+.row-actions { opacity: 1 !important; display: flex; align-items: center; gap: 6px; justify-content: flex-end; }
+
+/* Mobile action buttons */
+@media (max-width: 768px) {
+  .action-btn { font-size: 13px; padding: 8px 16px; width: 100%; text-align: center; border-radius: 8px; }
+  .checkout-btn { background: var(--blue); color: #fff; border-color: var(--blue); }
+  .checkin-btn { background: var(--green); color: #fff; border-color: var(--green); }
+  .admin-row-btns { opacity: 1 !important; }
+}
 
 /* ── WATERMARK ── */
 .main {
