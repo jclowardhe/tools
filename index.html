@@ -987,6 +987,7 @@ function rowHtml(l, i) {
     <button class="icon-btn del" onclick="deleteTool('${l.id}')" title="Delete">🗑</button>
   ` : '';
   const historyBtn = `<button class="icon-btn" onclick="openToolHistory('${l.id}')" title="History">📋</button>`;
+  const damageBtn = l.status !== 'Broken' ? `<button class="icon-btn del" onclick="openDamageModal('${l.id}')" title="Report Damage">⚠</button>` : '';
   return `<div class="table-row" style="animation-delay:${Math.min(i,20)*0.02}s">
     <div class="cell-id">${l.id}</div>
     <div class="cell-name">${l.name}</div>
@@ -995,7 +996,7 @@ function rowHtml(l, i) {
     <div class="cell-team" style="color:${tid ? teamColor(tid) : 'var(--text-light)'}">${tid ? teamName(tid) : '—'}</div>
     <div class="cell-date">${fmtDate(l.last_checked_out)}</div>
     <div style="display:flex;align-items:center;gap:6px;justify-content:flex-end;">
-      ${actionBtn}${historyBtn}${editBtns}
+      ${actionBtn}${damageBtn}${historyBtn}${editBtns}
     </div>
   </div>`;
 }
@@ -1336,7 +1337,7 @@ function renderQRCodes() {
 
 // ── KEYBOARD ──────────────────────────────────────────────────────────────
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { closeEditModal(); closeTeamModal(); closeScanner(); closeCheckout(); cancelAddRow(); closeToolHistory(); }
+  if (e.key === 'Escape') { closeEditModal(); closeTeamModal(); closeScanner(); closeCheckout(); cancelAddRow(); closeToolHistory(); closeDamageModal(); }
   if (e.key === 'Enter') {
     if (document.getElementById('editModal').style.display !== 'none') saveEdit();
     else if (document.getElementById('teamModal').style.display !== 'none') saveTeam();
@@ -1574,6 +1575,93 @@ async function logHistory(tool, action, extraData = {}) {
 }
 
 
+
+// ── DAMAGE REPORT ─────────────────────────────────────────────────────────
+let damageTool = null;
+let damagePhotoBase64 = null;
+
+function openDamageModal(toolId) {
+  const tool = tools.find(t => t.id === toolId);
+  if (!tool) return;
+  damageTool = tool;
+  damagePhotoBase64 = null;
+  document.getElementById('damageNotes').value = '';
+  document.getElementById('damagePhotoPreview').style.display = 'none';
+  document.getElementById('damagePhotoBtn').style.display = 'block';
+  document.getElementById('damagePhotoInput').value = '';
+  document.getElementById('damageToolId').textContent = toolId + (tool.name ? ' — ' + tool.name : '');
+  document.getElementById('damageModal').style.display = 'block';
+  setTimeout(() => document.getElementById('damageNotes').focus(), 100);
+}
+
+function closeDamageModal() {
+  document.getElementById('damageModal').style.display = 'none';
+  damageTool = null;
+  damagePhotoBase64 = null;
+}
+
+function handleDamagePhoto(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    // Compress image before storing
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const maxW = 800;
+      const scale = Math.min(1, maxW / img.width);
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+      damagePhotoBase64 = canvas.toDataURL('image/jpeg', 0.7);
+      document.getElementById('damagePhotoImg').src = damagePhotoBase64;
+      document.getElementById('damagePhotoPreview').style.display = 'block';
+      document.getElementById('damagePhotoBtn').style.display = 'none';
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearDamagePhoto() {
+  damagePhotoBase64 = null;
+  document.getElementById('damagePhotoPreview').style.display = 'none';
+  document.getElementById('damagePhotoBtn').style.display = 'block';
+  document.getElementById('damagePhotoInput').value = '';
+}
+
+async function submitDamageReport() {
+  if (!damageTool) return;
+  if (!currentForeman) { alert('Please sign in first.'); return; }
+  const notes = document.getElementById('damageNotes').value.trim();
+  if (!notes) {
+    document.getElementById('damageNotes').focus();
+    document.getElementById('damageNotes').style.borderColor = 'var(--red)';
+    setTimeout(() => document.getElementById('damageNotes').style.borderColor = '', 2000);
+    return;
+  }
+  setSyncStatus('syncing');
+  try {
+    // Update tool status to Broken
+    await dbUpdate('tools', damageTool.id, { status: 'Broken', team_id: currentForeman.team_id || damageTool.team_id || null });
+    // Log history with damage notes and photo
+    await dbInsert('tool_history', {
+      tool_id: damageTool.id,
+      action: 'Marked Broken',
+      foreman_id: currentForeman?.id || null,
+      foreman_name: currentForeman?.name || null,
+      team_id: currentForeman?.team_id || null,
+      team_name: currentForeman ? teamName(currentForeman.team_id) : null,
+      damage_notes: notes,
+      damage_photo: damagePhotoBase64 || null,
+      created_at: new Date().toISOString()
+    });
+    await loadAll();
+    closeDamageModal();
+  } catch(e) { setSyncStatus('err'); alert('Error: ' + e.message); }
+}
+
 // ── TOOL HISTORY MODAL ────────────────────────────────────────────────────
 async function openToolHistory(toolId) {
   const tool = tools.find(t => t.id === toolId);
@@ -1602,12 +1690,16 @@ function renderToolHistory(rows) {
   const actionColor = { 'Checked Out': 'var(--blue)', 'Checked In': 'var(--green)', 'Marked Broken': 'var(--red)', 'Added': '#7c3aed' };
   const actionBg = { 'Checked Out': 'var(--blue-bg)', 'Checked In': 'var(--green-bg)', 'Marked Broken': 'var(--red-bg)', 'Added': '#f5f3ff' };
   body.innerHTML = rows.map(r => `
-    <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);">
-      <div style="padding:3px 10px;border-radius:20px;background:${actionBg[r.action]||'#f9fafb'};color:${actionColor[r.action]||'var(--text-mid)'};font-size:11px;font-weight:800;font-family:'Nunito',sans-serif;white-space:nowrap;flex-shrink:0;">${r.action}</div>
-      <div style="flex:1;">
-        <div style="font-size:13px;font-weight:700;color:var(--text);font-family:'Nunito',sans-serif;">${r.foreman_name || '—'}${r.team_name ? ` <span style="color:var(--text-light);font-weight:400;">· ${r.team_name}</span>` : ''}</div>
+    <div style="padding:12px 0;border-bottom:1px solid var(--border);">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="padding:3px 10px;border-radius:3px;background:${actionBg[r.action]||'var(--bg2)'};color:${actionColor[r.action]||'var(--text-mid)'};font-size:11px;font-weight:800;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.08em;text-transform:uppercase;white-space:nowrap;flex-shrink:0;border:1px solid currentColor;">${r.action}</div>
+        <div style="flex:1;">
+          <div style="font-size:14px;font-weight:700;color:var(--text);font-family:'Barlow Condensed',sans-serif;letter-spacing:0.04em;">${r.foreman_name || '—'}${r.team_name ? ` <span style="color:var(--text-dim);font-weight:400;">· ${r.team_name}</span>` : ''}</div>
+        </div>
+        <div style="font-size:11px;color:var(--text-dim);font-family:'JetBrains Mono',monospace;white-space:nowrap;">${fmtDateTime(r.created_at)}</div>
       </div>
-      <div style="font-size:11px;color:var(--text-light);font-family:'JetBrains Mono',monospace;white-space:nowrap;">${fmtDateTime(r.created_at)}</div>
+      ${r.damage_notes ? `<div style="margin-top:8px;padding:8px 10px;background:var(--red-bg);border:1px solid var(--red-border);border-radius:3px;font-size:13px;color:var(--red);font-family:'Barlow',sans-serif;">⚠ ${r.damage_notes}</div>` : ''}
+      ${r.damage_photo ? `<img src="${r.damage_photo}" style="margin-top:8px;max-width:100%;max-height:180px;border-radius:3px;border:1px solid var(--border);display:block;" />` : ''}
     </div>`).join('');
 }
 
@@ -1744,6 +1836,45 @@ loadAll();
         <button class="modal-close" onclick="closeToolHistory()">✕</button>
       </div>
       <div id="toolHistoryBody" style="padding:16px 20px;overflow-y:auto;flex:1;"></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- DAMAGE REPORT MODAL -->
+<div id="damageModal" style="display:none;">
+  <div class="overlay" onclick="if(event.target===this)closeDamageModal()">
+    <div class="modal" style="width:500px;">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title">⚠ Report Damage</div>
+          <div id="damageToolId" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-dim);margin-top:2px;"></div>
+        </div>
+        <button class="modal-close" onclick="closeDamageModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label class="field-label">What's wrong with it?</label>
+          <textarea id="damageNotes" class="field-input" rows="3" placeholder="e.g. Handle cracked, missing parts, won't extend..." style="resize:vertical;font-family:'Barlow',sans-serif;font-size:14px;line-height:1.5;"></textarea>
+        </div>
+        <div class="field">
+          <label class="field-label">Photo of damage (optional)</label>
+          <div id="damagePhotoPreview" style="display:none;margin-bottom:8px;">
+            <img id="damagePhotoImg" style="max-width:100%;max-height:200px;border-radius:3px;border:1px solid var(--border);" />
+            <button onclick="clearDamagePhoto()" style="display:block;margin-top:6px;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;background:transparent;border:none;color:var(--text-dim);cursor:pointer;">✕ Remove photo</button>
+          </div>
+          <div id="damagePhotoBtn">
+            <input type="file" id="damagePhotoInput" accept="image/*" capture="environment" style="display:none;" onchange="handleDamagePhoto(event)" />
+            <button onclick="document.getElementById('damagePhotoInput').click()" style="width:100%;padding:14px;border:2px dashed var(--border2);background:var(--bg2);border-radius:3px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-dim);transition:all 0.15s;" onmouseover="this.style.borderColor='var(--text)';this.style.color='var(--text)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--text-dim)'">
+              📷 Take Photo / Choose File
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeDamageModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="submitDamageReport()" style="background:var(--red);border-color:var(--red);">Mark as Broken</button>
+      </div>
     </div>
   </div>
 </div>
